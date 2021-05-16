@@ -1,0 +1,2044 @@
+From 9cd000fd19bd961b29b4cd5fbbb4ec18797aeb5b Mon Sep 17 00:00:00 2001
+From: AndBondStyle <andbondstyle@gmail.com>
+Date: Sun, 16 May 2021 09:18:28 +0300
+Subject: [PATCH] apply changes
+
+---
+ Marlin/Configuration.h          |  87 +++++----
+ Marlin/Configuration_adv.h      |  48 ++---
+ Marlin/Marlin.h                 |  18 +-
+ Marlin/Marlin_main.cpp          | 325 ++++++++++++++++----------------
+ Marlin/SanityCheck.h            |  38 ++--
+ Marlin/Version.h                |   6 +-
+ Marlin/_Bootscreen.h            | 103 ++++++++++
+ Marlin/cardreader.cpp           |   5 +-
+ Marlin/configuration_store.cpp  |  57 +++---
+ Marlin/configuration_store.h    |  16 +-
+ Marlin/language_cz.h            |  38 +++-
+ Marlin/language_cz_utf8.h       |  40 +++-
+ Marlin/language_pt.h            |   2 +-
+ Marlin/language_pt_utf8.h       |   2 +-
+ Marlin/nozzle.cpp               |  13 +-
+ Marlin/nozzle.h                 |   2 +-
+ Marlin/pins_GT2560_REV_A.h      |   5 +-
+ Marlin/pins_GT2560_REV_A_PLUS.h |   9 +-
+ Marlin/planner.cpp              |   2 +-
+ Marlin/stepper.cpp              |   4 +-
+ Marlin/ubl_G29.cpp              |   3 +-
+ Marlin/ubl_motion.cpp           |   4 +-
+ 22 files changed, 513 insertions(+), 314 deletions(-)
+ create mode 100644 Marlin/_Bootscreen.h
+
+diff --git a/Marlin/Configuration.h b/Marlin/Configuration.h
+index 0b036f3..dcd858c 100644
+--- a/Marlin/Configuration.h
++++ b/Marlin/Configuration.h
+@@ -74,7 +74,7 @@
+ // User-specified version info of this build to display in [Pronterface, etc] terminal window during
+ // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
+ // build by the user have been successfully uploaded into firmware.
+-#define STRING_CONFIG_H_AUTHOR "(none, default config)" // Who made the changes.
++#define STRING_CONFIG_H_AUTHOR "(NKL, ZAV MAX-PLUS config)" // Who made the changes.
+ #define SHOW_BOOTSCREEN
+ #define STRING_SPLASH_LINE1 SHORT_BUILD_VERSION // will be shown during bootup in line 1
+ #define STRING_SPLASH_LINE2 WEBSITE_URL         // will be shown during bootup in line 2
+@@ -90,7 +90,7 @@
+ // boot image unmodified. For an example have a look at the bq Hephestos 2
+ // example configuration folder.
+ //
+-//#define SHOW_CUSTOM_BOOTSCREEN
++#define SHOW_CUSTOM_BOOTSCREEN
+ // @section machine
+ 
+ /**
+@@ -124,11 +124,11 @@
+ 
+ // Optional custom name for your RepStrap or other custom machine
+ // Displayed in the LCD "Ready" message
+-//#define CUSTOM_MACHINE_NAME "3D Printer"
++#define CUSTOM_MACHINE_NAME "3D Printer MAX-PLUS *"
+ 
+ // Define this to set a unique identifier for this printer, (Used by some programs to differentiate between machines)
+ // You can use an online service to generate a random UUID. (eg http://www.uuidgenerator.net/version4)
+-//#define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
++#define MACHINE_UUID "b25fff42-ff27-11e7-8be5-0ed5f89f718b"
+ 
+ // @section extruder
+ 
+@@ -137,7 +137,7 @@
+ #define EXTRUDERS 1
+ 
+ // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
+-#define DEFAULT_NOMINAL_FILAMENT_DIA 3.0
++#define DEFAULT_NOMINAL_FILAMENT_DIA 1.75
+ 
+ // For Cyclops or any "multi-extruder" that shares a single nozzle.
+ //#define SINGLENOZZLE
+@@ -291,7 +291,7 @@
+ #define TEMP_SENSOR_2 0
+ #define TEMP_SENSOR_3 0
+ #define TEMP_SENSOR_4 0
+-#define TEMP_SENSOR_BED 0
++#define TEMP_SENSOR_BED 1
+ 
+ // Dummy thermistor constant temperature readings, for use with 998 and 999
+ #define DUMMY_THERMISTOR_998_VALUE 25
+@@ -300,7 +300,7 @@
+ // Use temp sensor 1 as a redundant sensor with sensor 0. If the readings
+ // from the two sensors differ too much the print will be aborted.
+ //#define TEMP_SENSOR_1_AS_REDUNDANT
+-#define MAX_REDUNDANT_TEMP_SENSOR_DIFF 10
++#define MAX_REDUNDANT_TEMP_SENSOR_DIFF 20
+ 
+ // Extruder temperature must be close to target for this long before M109 returns success
+ #define TEMP_RESIDENCY_TIME 10  // (seconds)
+@@ -343,21 +343,26 @@
+ #define PID_MAX BANG_MAX // Limits current to nozzle while PID is active (see PID_FUNCTIONAL_RANGE below); 255=full current
+ #define PID_K1 0.95      // Smoothing factor within the PID
+ #if ENABLED(PIDTEMP)
+-  //#define PID_AUTOTUNE_MENU // Add PID Autotune to the LCD "Temperature" menu to run M303 and apply the result.
++  #define PID_AUTOTUNE_MENU // Add PID Autotune to the LCD "Temperature" menu to run M303 and apply the result.
+   //#define PID_DEBUG // Sends debug data to the serial port.
+   //#define PID_OPENLOOP 1 // Puts PID in open loop. M104/M140 sets the output power from 0 to PID_MAX
+   //#define SLOW_PWM_HEATERS // PWM with very low frequency (roughly 0.125Hz=8s) and minimum state time of approximately 1s useful for heaters driven by a relay
+-  //#define PID_PARAMS_PER_HOTEND // Uses separate PID parameters for each extruder (useful for mismatched extruders)
++  #define PID_PARAMS_PER_HOTEND // Uses separate PID parameters for each extruder (useful for mismatched extruders)
+                                   // Set/get with gcode: M301 E[extruder number, 0-2]
+   #define PID_FUNCTIONAL_RANGE 10 // If the temperature difference between the target temperature and the actual temperature
+                                   // is more than PID_FUNCTIONAL_RANGE then the PID will be shut off and the heater will be set to min/max.
+ 
+   // If you are using a pre-configured hotend then you can use one of the value sets by uncommenting it
+ 
++  // ZAV
++  #define  DEFAULT_Kp 18.87
++  #define  DEFAULT_Ki 1.42
++  #define  DEFAULT_Kd 62.62
++  
+   // Ultimaker
+-  #define  DEFAULT_Kp 22.2
+-  #define  DEFAULT_Ki 1.08
+-  #define  DEFAULT_Kd 114
++  //#define  DEFAULT_Kp 22.2
++  //#define  DEFAULT_Ki 1.08
++  //#define  DEFAULT_Kd 114
+ 
+   // MakerGear
+   //#define  DEFAULT_Kp 7.0
+@@ -383,7 +388,7 @@
+ // If your configuration is significantly different than this and you don't understand the issues involved, you probably
+ // shouldn't use bed PID until someone else verifies your hardware works.
+ // If this is enabled, find your own PID constants below.
+-//#define PIDTEMPBED
++#define PIDTEMPBED
+ 
+ //#define BED_LIMIT_SWITCHING
+ 
+@@ -397,11 +402,17 @@
+ 
+   //#define PID_BED_DEBUG // Sends debug data to the serial port.
+ 
++
++  //ZAV
++  #define  DEFAULT_bedKp 190.13
++  #define  DEFAULT_bedKi 14.02
++  #define  DEFAULT_bedKd 644.84
++  
+   //120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
+   //from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
+-  #define  DEFAULT_bedKp 10.00
+-  #define  DEFAULT_bedKi .023
+-  #define  DEFAULT_bedKd 305.4
++  //#define  DEFAULT_bedKp 10.00
++  //#define  DEFAULT_bedKi .023
++  //#define  DEFAULT_bedKd 305.4
+ 
+   //120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
+   //from pidautotune
+@@ -454,7 +465,7 @@
+ 
+ // Uncomment one of these options to enable CoreXY, CoreXZ, or CoreYZ kinematics
+ // either in the usual order or reversed
+-//#define COREXY
++#define COREXY
+ //#define COREXZ
+ //#define COREYZ
+ //#define COREYX
+@@ -472,10 +483,10 @@
+ // extra connectors. Leave undefined any used for non-endstop and non-probe purposes.
+ #define USE_XMIN_PLUG
+ #define USE_YMIN_PLUG
+-#define USE_ZMIN_PLUG
++//#define USE_ZMIN_PLUG
+ //#define USE_XMAX_PLUG
+ //#define USE_YMAX_PLUG
+-//#define USE_ZMAX_PLUG
++#define USE_ZMAX_PLUG
+ 
+ // coarse Endstop Settings
+ #define ENDSTOPPULLUPS // Comment this out (using // at the start of the line) to disable the endstop pullup resistors
+@@ -529,14 +540,14 @@
+  * Override with M92
+  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
+  */
+-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 4000, 500 }
++#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 295 }
+ 
+ /**
+  * Default Max Feed Rate (mm/s)
+  * Override with M203
+  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
+  */
+-#define DEFAULT_MAX_FEEDRATE          { 300, 300, 5, 25 }
++#define DEFAULT_MAX_FEEDRATE          { 300, 300, 50, 100 }
+ 
+ /**
+  * Default Max Acceleration (change/s) change = mm/s
+@@ -544,7 +555,7 @@
+  * Override with M201
+  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
+  */
+-#define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
++#define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 80, 10000 }
+ 
+ /**
+  * Default Acceleration (change/s) change = mm/s
+@@ -554,9 +565,9 @@
+  *   M204 R    Retract Acceleration
+  *   M204 T    Travel Acceleration
+  */
+-#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E acceleration for printing moves
++#define DEFAULT_ACCELERATION          2500    // X, Y, Z and E acceleration for printing moves
+ #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
+-#define DEFAULT_TRAVEL_ACCELERATION   3000    // X, Y, Z acceleration for travel (non printing) moves
++#define DEFAULT_TRAVEL_ACCELERATION   2500    // X, Y, Z acceleration for travel (non printing) moves
+ 
+ /**
+  * Default Jerk (mm/s)
+@@ -749,7 +760,7 @@
+ 
+ // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
+ #define INVERT_X_DIR false
+-#define INVERT_Y_DIR true
++#define INVERT_Y_DIR false
+ #define INVERT_Z_DIR false
+ 
+ // Enable this option for Toshiba stepper drivers
+@@ -775,12 +786,12 @@
+ // :[-1,1]
+ #define X_HOME_DIR -1
+ #define Y_HOME_DIR -1
+-#define Z_HOME_DIR -1
++#define Z_HOME_DIR 1
+ 
+ // @section machine
+ 
+ // The size of the print bed
+-#define X_BED_SIZE 200
++#define X_BED_SIZE 300
+ #define Y_BED_SIZE 200
+ 
+ // Travel limits (mm) after homing, corresponding to endstop positions.
+@@ -789,7 +800,7 @@
+ #define Z_MIN_POS 0
+ #define X_MAX_POS X_BED_SIZE
+ #define Y_MAX_POS Y_BED_SIZE
+-#define Z_MAX_POS 200
++#define Z_MAX_POS 240
+ 
+ /**
+  * Software Endstops
+@@ -1039,8 +1050,8 @@
+ #endif
+ 
+ // Homing speeds (mm/m)
+-#define HOMING_FEEDRATE_XY (50*60)
+-#define HOMING_FEEDRATE_Z  (4*60)
++#define HOMING_FEEDRATE_XY (70*60)
++#define HOMING_FEEDRATE_Z  (25*60)
+ 
+ // @section calibrate
+ 
+@@ -1113,7 +1124,7 @@
+ // M501 - reads parameters from EEPROM (if you need reset them after you changed them temporarily).
+ // M502 - reverts to the default "factory settings".  You still need to store them in EEPROM afterwards if you want to.
+ //
+-//#define EEPROM_SETTINGS // Enable for M500 and M501 commands
++#define EEPROM_SETTINGS // Enable for M500 and M501 commands
+ //#define DISABLE_M503    // Saves ~2700 bytes of PROGMEM. Disable for release!
+ #define EEPROM_CHITCHAT   // Give feedback on EEPROM commands. Disable to save PROGMEM.
+ 
+@@ -1150,11 +1161,11 @@
+ #define PREHEAT_1_FAN_SPEED     0 // Value from 0 to 255
+ 
+ #define PREHEAT_2_TEMP_HOTEND 240
+-#define PREHEAT_2_TEMP_BED    110
++#define PREHEAT_2_TEMP_BED     90
+ #define PREHEAT_2_FAN_SPEED     0 // Value from 0 to 255
+ 
+ /**
+- * Nozzle Park -- EXPERIMENTAL
++ * Nozzle Park
+  *
+  * Park the nozzle at the given XYZ position on idle or G27.
+  *
+@@ -1164,11 +1175,13 @@
+  *    P1  Raise the nozzle always to Z-park height.
+  *    P2  Raise the nozzle by Z-park amount, limited to Z_MAX_POS.
+  */
+-//#define NOZZLE_PARK_FEATURE
++#define NOZZLE_PARK_FEATURE
+ 
+ #if ENABLED(NOZZLE_PARK_FEATURE)
+   // Specify a park position as { X, Y, Z }
+   #define NOZZLE_PARK_POINT { (X_MIN_POS + 10), (Y_MAX_POS - 10), 20 }
++  #define NOZZLE_PARK_XY_FEEDRATE 100   // X and Y axes feedrate in mm/s (also used for delta printers Z axis)
++  #define NOZZLE_PARK_Z_FEEDRATE 5      // Z axis feedrate in mm/s (not used for delta printers)
+ #endif
+ 
+ /**
+@@ -1281,7 +1294,7 @@
+  *
+  * :{ 'en':'English', 'an':'Aragonese', 'bg':'Bulgarian', 'ca':'Catalan', 'cn':'Chinese', 'cz':'Czech', 'cz_utf8':'Czech (UTF8)', 'de':'German', 'el':'Greek', 'el-gr':'Greek (Greece)', 'es':'Spanish', 'eu':'Basque-Euskera', 'fi':'Finnish', 'fr':'French', 'fr_utf8':'French (UTF8)', 'gl':'Galician', 'hr':'Croatian', 'it':'Italian', 'kana':'Japanese', 'kana_utf8':'Japanese (UTF8)', 'nl':'Dutch', 'pl':'Polish', 'pt':'Portuguese', 'pt-br':'Portuguese (Brazilian)', 'pt-br_utf8':'Portuguese (Brazilian UTF8)', 'pt_utf8':'Portuguese (UTF8)', 'ru':'Russian', 'sk_utf8':'Slovak (UTF8)', 'tr':'Turkish', 'uk':'Ukrainian', 'zh_CN':'Chinese (Simplified)', 'zh_TW':'Chinese (Taiwan)', test':'TEST' }
+  */
+-#define LCD_LANGUAGE en
++#define LCD_LANGUAGE ru
+ 
+ /**
+  * LCD Character Set
+@@ -1327,7 +1340,7 @@
+  * you must uncomment the following option or it won't work.
+  *
+  */
+-//#define SDSUPPORT
++#define SDSUPPORT
+ 
+ /**
+  * SD CARD: SPI SPEED
+@@ -1479,7 +1492,7 @@
+ // RepRapDiscount FULL GRAPHIC Smart Controller
+ // http://reprap.org/wiki/RepRapDiscount_Full_Graphic_Smart_Controller
+ //
+-//#define REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER
++#define REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER
+ 
+ //
+ // MakerLab Mini Panel with graphic
+diff --git a/Marlin/Configuration_adv.h b/Marlin/Configuration_adv.h
+index 7d4b889..9d83f2b 100644
+--- a/Marlin/Configuration_adv.h
++++ b/Marlin/Configuration_adv.h
+@@ -64,8 +64,8 @@
+  * THERMAL_PROTECTION_HYSTERESIS and/or THERMAL_PROTECTION_PERIOD
+  */
+ #if ENABLED(THERMAL_PROTECTION_HOTENDS)
+-  #define THERMAL_PROTECTION_PERIOD 40        // Seconds
+-  #define THERMAL_PROTECTION_HYSTERESIS 4     // Degrees Celsius
++  #define THERMAL_PROTECTION_PERIOD 30        // Seconds
++  #define THERMAL_PROTECTION_HYSTERESIS 5     // Degrees Celsius
+ 
+   /**
+    * Whenever an M104, M109, or M303 increases the target temperature, the
+@@ -88,7 +88,7 @@
+  */
+ #if ENABLED(THERMAL_PROTECTION_BED)
+   #define THERMAL_PROTECTION_BED_PERIOD 20    // Seconds
+-  #define THERMAL_PROTECTION_BED_HYSTERESIS 2 // Degrees Celsius
++  #define THERMAL_PROTECTION_BED_HYSTERESIS 3 // Degrees Celsius
+ 
+   /**
+    * As described above, except for the bed (M140/M190/M303).
+@@ -100,7 +100,7 @@
+ #if ENABLED(PIDTEMP)
+   // this adds an experimental additional term to the heating power, proportional to the extrusion speed.
+   // if Kc is chosen well, the additional required power due to increased melting should be compensated.
+-  //#define PID_EXTRUSION_SCALING
++  #define PID_EXTRUSION_SCALING
+   #if ENABLED(PID_EXTRUSION_SCALING)
+     #define DEFAULT_Kc (100) //heating power=Kc*(e_speed)
+     #define LPQ_MAX_LEN 50
+@@ -147,14 +147,14 @@
+ 
+ // The number of consecutive low temperature errors that can occur
+ // before a min_temp_error is triggered. (Shouldn't be more than 10.)
+-//#define MAX_CONSECUTIVE_LOW_TEMPERATURE_ERROR_ALLOWED 0
++#define MAX_CONSECUTIVE_LOW_TEMPERATURE_ERROR_ALLOWED 0
+ 
+ // The number of milliseconds a hotend will preheat before starting to check
+ // the temperature. This value should NOT be set to the time it takes the
+ // hot end to reach the target temperature, but the time it takes to reach
+ // the minimum temperature your thermistor can read. The lower the better/safer.
+ // This shouldn't need to be more than 30 seconds (30000)
+-//#define MILLISECONDS_PREHEAT_TIME 0
++#define MILLISECONDS_PREHEAT_TIME 0
+ 
+ // @section extruder
+ 
+@@ -183,9 +183,9 @@
+  * The fan will turn on automatically whenever any stepper is enabled
+  * and turn off after a set period after all steppers are turned off.
+  */
+-//#define USE_CONTROLLER_FAN
++#define USE_CONTROLLER_FAN
+ #if ENABLED(USE_CONTROLLER_FAN)
+-  //#define CONTROLLER_FAN_PIN FAN1_PIN  // Set a custom pin for the controller fan
++  #define CONTROLLER_FAN_PIN 6    // Set a custom pin for the controller fan
+   #define CONTROLLERFAN_SECS 60          // Duration in seconds for the fan to run after all motors are disabled
+   #define CONTROLLERFAN_SPEED 255        // 255 == full speed
+ #endif
+@@ -193,7 +193,7 @@
+ // When first starting the main fan, run it at full speed for the
+ // given number of milliseconds.  This gets the fan spinning reliably
+ // before setting a PWM value. (Does not work with software PWM for fan on Sanguinololu)
+-//#define FAN_KICKSTART_TIME 100
++#define FAN_KICKSTART_TIME 120
+ 
+ // This defines the minimal speed for the main fan, run in PWM mode
+ // to enable uncomment and set minimal PWM speed for reliable running (1-255)
+@@ -214,12 +214,12 @@
+  * Multiple extruders can be assigned to the same pin in which case
+  * the fan will turn on when any selected extruder is above the threshold.
+  */
+-#define E0_AUTO_FAN_PIN -1
++#define E0_AUTO_FAN_PIN 11
+ #define E1_AUTO_FAN_PIN -1
+ #define E2_AUTO_FAN_PIN -1
+ #define E3_AUTO_FAN_PIN -1
+ #define E4_AUTO_FAN_PIN -1
+-#define EXTRUDER_AUTO_FAN_TEMPERATURE 50
++#define EXTRUDER_AUTO_FAN_TEMPERATURE 65
+ #define EXTRUDER_AUTO_FAN_SPEED   255  // == full speed
+ 
+ /**
+@@ -253,7 +253,7 @@
+ 
+ // If you want endstops to stay on (by default) even when not homing
+ // enable this option. Override at any time with M120, M121.
+-//#define ENDSTOPS_ALWAYS_ON_DEFAULT
++#define ENDSTOPS_ALWAYS_ON_DEFAULT
+ 
+ // @section extras
+ 
+@@ -374,7 +374,7 @@
+ // Default stepper release if idle. Set to 0 to deactivate.
+ // Steppers will shut down DEFAULT_STEPPER_DEACTIVE_TIME seconds after the last move when DISABLE_INACTIVE_? is true.
+ // Time can be set by M18 and M84.
+-#define DEFAULT_STEPPER_DEACTIVE_TIME 120
++#define DEFAULT_STEPPER_DEACTIVE_TIME 180
+ #define DISABLE_INACTIVE_X true
+ #define DISABLE_INACTIVE_Y true
+ #define DISABLE_INACTIVE_Z true  // set to false if the nozzle will fall down on your printed part when print has finished.
+@@ -383,7 +383,7 @@
+ #define DEFAULT_MINIMUMFEEDRATE       0.0     // minimum feedrate
+ #define DEFAULT_MINTRAVELFEEDRATE     0.0
+ 
+-//#define HOME_AFTER_DEACTIVATE  // Require rehoming after steppers are deactivated
++#define HOME_AFTER_DEACTIVATE  // Require rehoming after steppers are deactivated
+ 
+ // @section lcd
+ 
+@@ -471,7 +471,7 @@
+ // @section lcd
+ 
+ // Include a page of printer information in the LCD Main Menu
+-//#define LCD_INFO_MENU
++#define LCD_INFO_MENU
+ 
+ // Scroll a longer status message into view
+ //#define STATUS_MESSAGE_SCROLLING
+@@ -586,7 +586,7 @@
+    * This feature must be enabled with "M540 S1" or from the LCD menu.
+    * To have any effect, endstops must be enabled during SD printing.
+    */
+-  //#define ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED
++  #define ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED
+ 
+   /**
+    * This option makes it easier to print the same SD Card file again.
+@@ -873,15 +873,11 @@
+  * If PARK_HEAD_ON_PAUSE enabled, adds the GCode M125 to pause printing and park the nozzle.
+  *
+  * Requires an LCD display.
++ * Requires NOZZLE_PARK_FEATURE.
+  * This feature is required for the default FILAMENT_RUNOUT_SCRIPT.
+  */
+-//#define ADVANCED_PAUSE_FEATURE
++#define ADVANCED_PAUSE_FEATURE
+ #if ENABLED(ADVANCED_PAUSE_FEATURE)
+-  #define PAUSE_PARK_X_POS 3                  // X position of hotend
+-  #define PAUSE_PARK_Y_POS 3                  // Y position of hotend
+-  #define PAUSE_PARK_Z_ADD 10                 // Z addition of hotend (lift)
+-  #define PAUSE_PARK_XY_FEEDRATE 100          // X and Y axes feedrate in mm/s (also used for delta printers Z axis)
+-  #define PAUSE_PARK_Z_FEEDRATE 5             // Z axis feedrate in mm/s (not used for delta printers)
+   #define PAUSE_PARK_RETRACT_FEEDRATE 60      // Initial retract feedrate in mm/s
+   #define PAUSE_PARK_RETRACT_LENGTH 2         // Initial retract in mm
+                                               // It is a short retract used immediately after print interrupt before move to filament exchange position
+@@ -1445,6 +1441,14 @@
+  */
+ //#define ACTION_ON_KILL "poweroff"
+ 
++/**
++ * Specify an action command to send to the host on pause and resume.
++ * Will be sent in the form '//action:ACTION_ON_PAUSE', e.g. '//action:pause'.
++ * The host must be configured to handle the action command.
++ */
++//#define ACTION_ON_PAUSE "pause"
++//#define ACTION_ON_RESUME "resume"
++
+ //===========================================================================
+ //====================== I2C Position Encoder Settings ======================
+ //===========================================================================
+diff --git a/Marlin/Marlin.h b/Marlin/Marlin.h
+index fac820a..2c68b8c 100644
+--- a/Marlin/Marlin.h
++++ b/Marlin/Marlin.h
+@@ -321,17 +321,17 @@ void report_current_position();
+   #endif
+ 
+   // Macro to obtain the Z position of an individual tower
+-  #define DELTA_Z(T) raw[Z_AXIS] + _SQRT(     \
+-    delta_diagonal_rod_2_tower[T] - HYPOT2(   \
+-        delta_tower[T][X_AXIS] - raw[X_AXIS], \
+-        delta_tower[T][Y_AXIS] - raw[Y_AXIS]  \
+-      )                                       \
++  #define DELTA_Z(V,T) V[Z_AXIS] + _SQRT(   \
++    delta_diagonal_rod_2_tower[T] - HYPOT2( \
++        delta_tower[T][X_AXIS] - V[X_AXIS], \
++        delta_tower[T][Y_AXIS] - V[Y_AXIS]  \
++      )                                     \
+     )
+ 
+-  #define DELTA_RAW_IK() do {        \
+-    delta[A_AXIS] = DELTA_Z(A_AXIS); \
+-    delta[B_AXIS] = DELTA_Z(B_AXIS); \
+-    delta[C_AXIS] = DELTA_Z(C_AXIS); \
++  #define DELTA_IK(V) do {        \
++    delta[A_AXIS] = DELTA_Z(V, A_AXIS); \
++    delta[B_AXIS] = DELTA_Z(V, B_AXIS); \
++    delta[C_AXIS] = DELTA_Z(V, C_AXIS); \
+   }while(0)
+ 
+ #elif IS_SCARA
+diff --git a/Marlin/Marlin_main.cpp b/Marlin/Marlin_main.cpp
+index 4e81753..4f4271a 100644
+--- a/Marlin/Marlin_main.cpp
++++ b/Marlin/Marlin_main.cpp
+@@ -2502,27 +2502,25 @@ static void clean_up_after_endstop_or_probe_move() {
+    * Reset calibration results to zero.
+    */
+   void reset_bed_level() {
++    #if ENABLED(DEBUG_LEVELING_FEATURE)
++      if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("reset_bed_level");
++    #endif
+     set_bed_leveling_enabled(false);
+     #if ENABLED(MESH_BED_LEVELING)
+       if (leveling_is_valid()) {
+         mbl.reset();
+         mbl.has_mesh = false;
+       }
+-    #else
+-      #if ENABLED(DEBUG_LEVELING_FEATURE)
+-        if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("reset_bed_level");
+-      #endif
+-      #if ABL_PLANAR
+-        planner.bed_level_matrix.set_to_identity();
+-      #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
+-        bilinear_start[X_AXIS] = bilinear_start[Y_AXIS] =
+-        bilinear_grid_spacing[X_AXIS] = bilinear_grid_spacing[Y_AXIS] = 0;
+-        for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++)
+-          for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++)
+-            z_values[x][y] = NAN;
+-      #elif ENABLED(AUTO_BED_LEVELING_UBL)
+-        ubl.reset();
+-      #endif
++    #elif ENABLED(AUTO_BED_LEVELING_UBL)
++      ubl.reset();
++    #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
++      bilinear_start[X_AXIS] = bilinear_start[Y_AXIS] =
++      bilinear_grid_spacing[X_AXIS] = bilinear_grid_spacing[Y_AXIS] = 0;
++      for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++)
++        for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++)
++          z_values[x][y] = NAN;
++    #elif ABL_PLANAR
++      planner.bed_level_matrix.set_to_identity();
+     #endif
+   }
+ 
+@@ -4492,7 +4490,7 @@ void home_all_axes() { gcode_G28(true); }
+       const uint8_t old_debug_flags = marlin_debug_flags;
+       if (query) marlin_debug_flags |= DEBUG_LEVELING;
+       if (DEBUGGING(LEVELING)) {
+-        DEBUG_POS(">>> gcode_G29", current_position);
++        DEBUG_POS(">>> G29", current_position);
+         log_machine_info();
+       }
+       marlin_debug_flags = old_debug_flags;
+@@ -4554,12 +4552,10 @@ void home_all_axes() { gcode_G28(true); }
+                           abl_grid_points_y = GRID_MAX_POINTS_Y;
+       #endif
+ 
+-      #if ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(PROBE_MANUALLY)
+-        #if ENABLED(AUTO_BED_LEVELING_LINEAR)
+-          ABL_VAR int abl2;
+-        #else // Bilinear
+-          int constexpr abl2 = GRID_MAX_POINTS;
+-        #endif
++      #if ENABLED(AUTO_BED_LEVELING_LINEAR)
++        ABL_VAR int abl2;
++      #elif ENABLED(PROBE_MANUALLY) // Bilinear
++        int constexpr abl2 = GRID_MAX_POINTS;
+       #endif
+ 
+       #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
+@@ -4577,7 +4573,9 @@ void home_all_axes() { gcode_G28(true); }
+ 
+     #elif ENABLED(AUTO_BED_LEVELING_3POINT)
+ 
+-      int constexpr abl2 = 3;
++      #if ENABLED(PROBE_MANUALLY)
++        int constexpr abl2 = 3; // used to show total points
++      #endif
+ 
+       // Probe at 3 arbitrary points
+       ABL_VAR vector_3 points[3] = {
+@@ -4626,7 +4624,7 @@ void home_all_axes() { gcode_G28(true); }
+                  j = parser.byteval('J', -1);
+ 
+           if (!isnan(rx) && !isnan(ry)) {
+-            // Get nearest i / j from x / y
++            // Get nearest i / j from rx / ry
+             i = (rx - bilinear_start[X_AXIS] + 0.5 * xGridSpacing) / xGridSpacing;
+             j = (ry - bilinear_start[Y_AXIS] + 0.5 * yGridSpacing) / yGridSpacing;
+             i = constrain(i, 0, GRID_MAX_POINTS_X - 1);
+@@ -4639,22 +4637,18 @@ void home_all_axes() { gcode_G28(true); }
+               bed_level_virt_interpolate();
+             #endif
+             set_bed_leveling_enabled(abl_should_enable);
+-            report_current_position();
++            if (abl_should_enable) report_current_position();
+           }
+           return;
+         } // parser.seen('W')
+ 
+       #endif
+ 
+-      #if HAS_LEVELING
+-
+-        // Jettison bed leveling data
+-        if (parser.seen('J')) {
+-          reset_bed_level();
+-          return;
+-        }
+-
+-      #endif
++      // Jettison bed leveling data
++      if (parser.seen('J')) {
++        reset_bed_level();
++        return;
++      }
+ 
+       verbose_level = parser.intval('V');
+       if (!WITHIN(verbose_level, 0, 4)) {
+@@ -4684,6 +4678,7 @@ void home_all_axes() { gcode_G28(true); }
+         }
+ 
+         abl2 = abl_grid_points_x * abl_grid_points_y;
++        mean = 0;
+ 
+       #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
+ 
+@@ -4736,28 +4731,21 @@ void home_all_axes() { gcode_G28(true); }
+       #endif // ABL_GRID
+ 
+       if (verbose_level > 0) {
+-        SERIAL_PROTOCOLLNPGM("G29 Auto Bed Leveling");
+-        if (dryrun) SERIAL_PROTOCOLLNPGM("Running in DRY-RUN mode");
++        SERIAL_PROTOCOLPGM("G29 Auto Bed Leveling");
++        if (dryrun) SERIAL_PROTOCOLPGM(" (DRYRUN)");
++        SERIAL_EOL();
+       }
+ 
+       stepper.synchronize();
+ 
+-      // Disable auto bed leveling during G29
+-      planner.leveling_active = false;
+-
+-      if (!dryrun) {
+-        // Re-orient the current position without leveling
+-        // based on where the steppers are positioned.
+-        set_current_from_steppers_for_axis(ALL_AXES);
+-
+-        // Sync the planner to where the steppers stopped
+-        SYNC_PLAN_POSITION_KINEMATIC();
+-      }
++      // Disable auto bed leveling during G29.
++      // Be formal so G29 can be done successively without G28.
++      set_bed_leveling_enabled(false);
+ 
+       #if HAS_BED_PROBE
+         // Deploy the probe. Probe will raise if needed.
+         if (DEPLOY_PROBE()) {
+-          planner.leveling_active = abl_should_enable;
++          set_bed_leveling_enabled(abl_should_enable);
+           return;
+         }
+       #endif
+@@ -4774,10 +4762,6 @@ void home_all_axes() { gcode_G28(true); }
+           || left_probe_bed_position != bilinear_start[X_AXIS]
+           || front_probe_bed_position != bilinear_start[Y_AXIS]
+         ) {
+-          if (dryrun) {
+-            // Before reset bed level, re-enable to correct the position
+-            planner.leveling_active = abl_should_enable;
+-          }
+           // Reset grid to 0.0 or "not probed". (Also disables ABL)
+           reset_bed_level();
+ 
+@@ -4821,7 +4805,7 @@ void home_all_axes() { gcode_G28(true); }
+         #if HAS_SOFTWARE_ENDSTOPS
+           soft_endstops_enabled = enable_soft_endstops;
+         #endif
+-        planner.leveling_active = abl_should_enable;
++        set_bed_leveling_enabled(abl_should_enable);
+         g29_in_progress = false;
+         #if ENABLED(LCD_BED_LEVELING)
+           lcd_wait_for_move = false;
+@@ -4939,9 +4923,10 @@ void home_all_axes() { gcode_G28(true); }
+       #elif ENABLED(AUTO_BED_LEVELING_3POINT)
+ 
+         // Probe at 3 arbitrary points
+-        if (abl_probe_index < 3) {
++        if (abl_probe_index < abl2) {
+           xProbe = points[abl_probe_index].x;
+           yProbe = points[abl_probe_index].y;
++          _manual_goto_xy(xProbe, yProbe);
+           #if HAS_SOFTWARE_ENDSTOPS
+             // Disable software endstops to allow manual adjustment
+             // If G29 is not completed, they will not be re-enabled
+@@ -4979,6 +4964,8 @@ void home_all_axes() { gcode_G28(true); }
+     {
+       const bool stow_probe_after_each = parser.boolval('E');
+ 
++      measured_z = 0;
++
+       #if ABL_GRID
+ 
+         bool zig = PR_OUTER_END & 1;  // Always end at RIGHT and BACK_PROBE_BED_POSITION
+@@ -5024,7 +5011,7 @@ void home_all_axes() { gcode_G28(true); }
+             measured_z = faux ? 0.001 * random(-100, 101) : probe_pt(xProbe, yProbe, stow_probe_after_each, verbose_level);
+ 
+             if (isnan(measured_z)) {
+-              planner.leveling_active = abl_should_enable;
++              set_bed_leveling_enabled(abl_should_enable);
+               break;
+             }
+ 
+@@ -5060,7 +5047,7 @@ void home_all_axes() { gcode_G28(true); }
+           yProbe = points[i].y;
+           measured_z = faux ? 0.001 * random(-100, 101) : probe_pt(xProbe, yProbe, stow_probe_after_each, verbose_level);
+           if (isnan(measured_z)) {
+-            planner.leveling_active = abl_should_enable;
++            set_bed_leveling_enabled(abl_should_enable);
+             break;
+           }
+           points[i].z = measured_z;
+@@ -5083,7 +5070,7 @@ void home_all_axes() { gcode_G28(true); }
+ 
+       // Raise to _Z_CLEARANCE_DEPLOY_PROBE. Stow the probe.
+       if (STOW_PROBE()) {
+-        planner.leveling_active = abl_should_enable;
++        set_bed_leveling_enabled(abl_should_enable);
+         measured_z = NAN;
+       }
+     }
+@@ -5312,7 +5299,7 @@ void home_all_axes() { gcode_G28(true); }
+     if (!faux) clean_up_after_endstop_or_probe_move();
+ 
+     #if ENABLED(DEBUG_LEVELING_FEATURE)
+-      if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("<<< gcode_G29");
++      if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("<<< G29");
+     #endif
+ 
+     report_current_position();
+@@ -6492,12 +6479,16 @@ inline void gcode_M17() {
+     stepper.synchronize();
+   }
+ 
+-  static bool pause_print(const float &retract, const float &z_lift, const float &x_pos, const float &y_pos,
+-                          const float &unload_length = 0 , const int8_t max_beep_count = 0, const bool show_lcd = false
++  static bool pause_print(const float &retract, const point_t &park_point, const float &unload_length = 0,
++                          const int8_t max_beep_count = 0, const bool show_lcd = false
+   ) {
+     if (move_away_flag) return false; // already paused
+ 
+-    if (!DEBUGGING(DRYRUN) && (unload_length != 0 || retract != 0)) {
++    #ifdef ACTION_ON_PAUSE
++      SERIAL_ECHOLNPGM("//action:" ACTION_ON_PAUSE);
++    #endif
++
++    if (!DEBUGGING(DRYRUN) && unload_length != 0) {
+       #if ENABLED(PREVENT_COLD_EXTRUSION)
+         if (!thermalManager.allow_cold_extrude &&
+             thermalManager.degTargetHotend(active_extruder) < thermalManager.extrude_min_temp) {
+@@ -6534,14 +6525,11 @@ inline void gcode_M17() {
+     COPY(resume_position, current_position);
+ 
+     // Initial retract before move to filament change position
+-    if (retract) do_pause_e_move(retract, PAUSE_PARK_RETRACT_FEEDRATE);
++    if (retract && !thermalManager.tooColdToExtrude(active_extruder))
++      do_pause_e_move(retract, PAUSE_PARK_RETRACT_FEEDRATE);
+ 
+-    // Lift Z axis
+-    if (z_lift > 0)
+-      do_blocking_move_to_z(current_position[Z_AXIS] + z_lift, PAUSE_PARK_Z_FEEDRATE);
+-
+-    // Move XY axes to filament exchange position
+-    do_blocking_move_to_xy(x_pos, y_pos, PAUSE_PARK_XY_FEEDRATE);
++    // Park the nozzle by moving up by z_lift and then moving to (x_pos, y_pos)
++    Nozzle::park(2, park_point);
+ 
+     if (unload_length != 0) {
+       if (show_lcd) {
+@@ -6683,28 +6671,30 @@ inline void gcode_M17() {
+ 
+     #if ENABLED(ULTIPANEL) && ADVANCED_PAUSE_EXTRUDE_LENGTH > 0
+ 
+-      float extrude_length = initial_extrude_length;
++      if (!thermalManager.tooColdToExtrude(active_extruder)) {
++        float extrude_length = initial_extrude_length;
+ 
+-      do {
+-        if (extrude_length > 0) {
+-          // "Wait for filament extrude"
+-          lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_EXTRUDE);
++        do {
++          if (extrude_length > 0) {
++            // "Wait for filament extrude"
++            lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_EXTRUDE);
+ 
+-          // Extrude filament to get into hotend
+-          do_pause_e_move(extrude_length, ADVANCED_PAUSE_EXTRUDE_FEEDRATE);
+-        }
++            // Extrude filament to get into hotend
++            do_pause_e_move(extrude_length, ADVANCED_PAUSE_EXTRUDE_FEEDRATE);
++          }
+ 
+-        // Show "Extrude More" / "Resume" menu and wait for reply
+-        KEEPALIVE_STATE(PAUSED_FOR_USER);
+-        wait_for_user = false;
+-        lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_OPTION);
+-        while (advanced_pause_menu_response == ADVANCED_PAUSE_RESPONSE_WAIT_FOR) idle(true);
+-        KEEPALIVE_STATE(IN_HANDLER);
++          // Show "Extrude More" / "Resume" menu and wait for reply
++          KEEPALIVE_STATE(PAUSED_FOR_USER);
++          wait_for_user = false;
++          lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_OPTION);
++          while (advanced_pause_menu_response == ADVANCED_PAUSE_RESPONSE_WAIT_FOR) idle(true);
++          KEEPALIVE_STATE(IN_HANDLER);
+ 
+-        extrude_length = ADVANCED_PAUSE_EXTRUDE_LENGTH;
++          extrude_length = ADVANCED_PAUSE_EXTRUDE_LENGTH;
+ 
+-        // Keep looping if "Extrude More" was selected
+-      } while (advanced_pause_menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE);
++          // Keep looping if "Extrude More" was selected
++        } while (advanced_pause_menu_response == ADVANCED_PAUSE_RESPONSE_EXTRUDE_MORE);
++      }
+ 
+     #endif
+ 
+@@ -6718,8 +6708,8 @@ inline void gcode_M17() {
+     planner.set_e_position_mm(current_position[E_AXIS]);
+ 
+     // Move XY to starting position, then Z
+-    do_blocking_move_to_xy(resume_position[X_AXIS], resume_position[Y_AXIS], PAUSE_PARK_XY_FEEDRATE);
+-    do_blocking_move_to_z(resume_position[Z_AXIS], PAUSE_PARK_Z_FEEDRATE);
++    do_blocking_move_to_xy(resume_position[X_AXIS], resume_position[Y_AXIS], NOZZLE_PARK_XY_FEEDRATE);
++    do_blocking_move_to_z(resume_position[Z_AXIS], NOZZLE_PARK_Z_FEEDRATE);
+ 
+     #if ENABLED(FILAMENT_RUNOUT_SENSOR)
+       filament_ran_out = false;
+@@ -6730,6 +6720,10 @@ inline void gcode_M17() {
+       lcd_advanced_pause_show_message(ADVANCED_PAUSE_MESSAGE_STATUS);
+     #endif
+ 
++    #ifdef ACTION_ON_RESUME
++      SERIAL_ECHOLNPGM("//action:" ACTION_ON_RESUME);
++    #endif
++
+     #if ENABLED(SDSUPPORT)
+       if (sd_print_paused) {
+         card.startFileprint();
+@@ -8264,7 +8258,7 @@ inline void gcode_M18_M84() {
+       #endif
+     }
+ 
+-    #if ENABLED(AUTO_BED_LEVELING_UBL) && ENABLED(ULTRA_LCD)  // Only needed with an LCD
++    #if ENABLED(AUTO_BED_LEVELING_UBL) && ENABLED(ULTIPANEL)  // Only needed with an LCD
+       ubl.lcd_map_control = defer_return_to_status = false;
+     #endif
+   }
+@@ -8451,6 +8445,7 @@ inline void gcode_M114() {
+   static void cap_line(const char * const name, bool ena=false) {
+     SERIAL_PROTOCOLPGM("Cap:");
+     serialprintPGM(name);
++    SERIAL_PROTOCOLPGM(":");
+     SERIAL_PROTOCOLLN(int(ena ? 1 : 0));
+   }
+ #endif
+@@ -8609,36 +8604,25 @@ inline void gcode_M121() { endstops.enable_globally(false); }
+       #endif
+     ;
+ 
+-    // Lift Z axis
+-    const float z_lift = parser.linearval('Z')
+-      #ifdef PAUSE_PARK_Z_ADD
+-        + PAUSE_PARK_Z_ADD
+-      #endif
+-    ;
++    point_t park_point = NOZZLE_PARK_POINT;
+ 
+     // Move XY axes to filament change position or given position
+-    const float x_pos = parser.linearval('X')
+-      #ifdef PAUSE_PARK_X_POS
+-        + PAUSE_PARK_X_POS
+-      #endif
+-      #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE)
+-        + (active_extruder ? hotend_offset[X_AXIS][active_extruder] : 0)
+-      #endif
+-    ;
+-    const float y_pos = parser.linearval('Y')
+-      #ifdef PAUSE_PARK_Y_POS
+-        + PAUSE_PARK_Y_POS
+-      #endif
+-      #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE)
+-        + (active_extruder ? hotend_offset[Y_AXIS][active_extruder] : 0)
+-      #endif
+-    ;
++    if (parser.seenval('X')) park_point.x = parser.linearval('X');
++    if (parser.seenval('Y')) park_point.y = parser.linearval('Y');
++
++    // Lift Z axis
++    if (parser.seenval('Z')) park_point.z = parser.linearval('Z');
++
++    #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE)
++      park_point.x += (active_extruder ? hotend_offset[X_AXIS][active_extruder] : 0);
++      park_point.y += (active_extruder ? hotend_offset[Y_AXIS][active_extruder] : 0);
++    #endif
+ 
+     #if DISABLED(SDSUPPORT)
+       const bool job_running = print_job_timer.isRunning();
+     #endif
+ 
+-    if (pause_print(retract, z_lift, x_pos, y_pos)) {
++    if (pause_print(retract, park_point)) {
+       #if DISABLED(SDSUPPORT)
+         // Wait for lcd click or M108
+         wait_for_filament_reload();
+@@ -10030,6 +10014,7 @@ inline void gcode_M502() {
+    *
+    */
+   inline void gcode_M600() {
++    point_t park_point = NOZZLE_PARK_POINT;
+ 
+     #if ENABLED(HOME_BEFORE_FILAMENT_CHANGE)
+       // Don't allow filament change without homing first
+@@ -10044,23 +10029,20 @@ inline void gcode_M502() {
+     ;
+ 
+     // Lift Z axis
+-    const float z_lift = parser.linearval('Z', 0
+-      #ifdef PAUSE_PARK_Z_ADD
+-        + PAUSE_PARK_Z_ADD
+-      #endif
+-    );
++    if (parser.seenval('Z'))
++      park_point.z = parser.linearval('Z');
+ 
+-    // Move XY axes to filament exchange position
+-    const float x_pos = parser.linearval('X', 0
+-      #ifdef PAUSE_PARK_X_POS
+-        + PAUSE_PARK_X_POS
+-      #endif
+-    );
+-    const float y_pos = parser.linearval('Y', 0
+-      #ifdef PAUSE_PARK_Y_POS
+-        + PAUSE_PARK_Y_POS
+-      #endif
+-    );
++    // Move XY axes to filament change position or given position
++    if (parser.seenval('X'))
++      park_point.x = parser.linearval('X');
++
++    if (parser.seenval('Y'))
++      park_point.y = parser.linearval('Y');
++
++    #if HOTENDS > 1 && DISABLED(DUAL_X_CARRIAGE)
++      park_point.x += (active_extruder ? hotend_offset[X_AXIS][active_extruder] : 0);
++      park_point.y += (active_extruder ? hotend_offset[Y_AXIS][active_extruder] : 0);
++    #endif
+ 
+     // Unload filament
+     const float unload_length = parser.seen('U') ? parser.value_axis_units(E_AXIS) : 0
+@@ -10086,7 +10068,7 @@ inline void gcode_M502() {
+ 
+     const bool job_running = print_job_timer.isRunning();
+ 
+-    if (pause_print(retract, z_lift, x_pos, y_pos, unload_length, beep_count, true)) {
++    if (pause_print(retract, park_point, unload_length, beep_count, true)) {
+       wait_for_filament_reload(beep_count);
+       resume_print(load_length, ADVANCED_PAUSE_EXTRUDE_LENGTH, beep_count);
+     }
+@@ -12749,7 +12731,7 @@ void ok_to_send() {
+     }while(0)
+ 
+   void inverse_kinematics(const float raw[XYZ]) {
+-    DELTA_RAW_IK();
++    DELTA_IK(raw);
+     // DELTA_DEBUG();
+   }
+ 
+@@ -13027,7 +13009,6 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+     }
+     else {
+       // Must already have been split on these border(s)
+-      // This should be a rare case.
+       buffer_line_to_destination(fr_mm_s);
+       set_current_from_destination();
+       return;
+@@ -13096,7 +13077,6 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+     }
+     else {
+       // Must already have been split on these border(s)
+-      // This should be a rare case.
+       buffer_line_to_destination(fr_mm_s);
+       set_current_from_destination();
+       return;
+@@ -13139,7 +13119,7 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+     // If the move is only in Z/E don't split up the move
+     if (!xdiff && !ydiff) {
+       planner.buffer_line_kinematic(rtarget, _feedrate_mm_s, active_extruder);
+-      return false;
++      return false; // caller will update current_position
+     }
+ 
+     // Fail if attempting move outside printable radius
+@@ -13184,8 +13164,9 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+     // SERIAL_ECHOPAIR(" seconds=", seconds);
+     // SERIAL_ECHOLNPAIR(" segments=", segments);
+ 
+-    #if IS_SCARA && ENABLED(SCARA_FEEDRATE_SCALING)
++    #if ENABLED(SCARA_FEEDRATE_SCALING)
+       // SCARA needs to scale the feed rate from mm/s to degrees/s
++      // i.e., Complete the angular vector in the given time.
+       const float inv_segment_length = min(10.0, float(segments) / cartesian_mm), // 1/mm/segs
+                   inverse_secs = inv_segment_length * _feedrate_mm_s;
+       float oldA = stepper.get_axis_position_degrees(A_AXIS),
+@@ -13209,42 +13190,33 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+ 
+       LOOP_XYZE(i) raw[i] += segment_distance[i];
+       #if ENABLED(DELTA)
+-        DELTA_RAW_IK(); // Delta can inline its kinematics
++        DELTA_IK(raw); // Delta can inline its kinematics
+       #else
+         inverse_kinematics(raw);
+       #endif
+ 
+       ADJUST_DELTA(raw); // Adjust Z if bed leveling is enabled
+ 
+-      #if IS_SCARA && ENABLED(SCARA_FEEDRATE_SCALING)
++      #if ENABLED(SCARA_FEEDRATE_SCALING)
+         // For SCARA scale the feed rate from mm/s to degrees/s
+-        // Use ratio between the length of the move and the larger angle change
+-        const float adiff = abs(delta[A_AXIS] - oldA),
+-                    bdiff = abs(delta[B_AXIS] - oldB);
+-        planner.buffer_line(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], raw[E_AXIS], max(adiff, bdiff) * inverse_secs, active_extruder);
+-        oldA = delta[A_AXIS];
+-        oldB = delta[B_AXIS];
++        // i.e., Complete the angular vector in the given time.
++        planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], raw[Z_AXIS], raw[E_AXIS], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder);
++        oldA = delta[A_AXIS]; oldB = delta[B_AXIS];
+       #else
+         planner.buffer_line(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], raw[E_AXIS], _feedrate_mm_s, active_extruder);
+       #endif
+     }
+ 
+-    // Since segment_distance is only approximate,
+-    // the final move must be to the exact destination.
+-
+-    #if IS_SCARA && ENABLED(SCARA_FEEDRATE_SCALING)
+-      // For SCARA scale the feed rate from mm/s to degrees/s
+-      // With segments > 1 length is 1 segment, otherwise total length
++    // Ensure last segment arrives at target location.
++    #if ENABLED(SCARA_FEEDRATE_SCALING)
+       inverse_kinematics(rtarget);
+       ADJUST_DELTA(rtarget);
+-      const float adiff = abs(delta[A_AXIS] - oldA),
+-                  bdiff = abs(delta[B_AXIS] - oldB);
+-      planner.buffer_line(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], raw[E_AXIS], max(adiff, bdiff) * inverse_secs, active_extruder);
++      planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], rtarget[Z_AXIS], rtarget[E_AXIS], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder);
+     #else
+       planner.buffer_line_kinematic(rtarget, _feedrate_mm_s, active_extruder);
+     #endif
+ 
+-    return false;
++    return false; // caller will update current_position
+   }
+ 
+ #else // !IS_KINEMATIC
+@@ -13265,7 +13237,7 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+           return true;                                                                    // all moves, including Z-only moves.
+         #elif ENABLED(SEGMENT_LEVELED_MOVES)
+           segmented_line_to_destination(MMS_SCALED(feedrate_mm_s));
+-          return false;
++          return false; // caller will update current_position
+         #else
+           /**
+            * For MBL and ABL-BILINEAR only segment moves when X or Y are involved.
+@@ -13284,7 +13256,7 @@ void set_current_from_steppers_for_axis(const AxisEnum axis) {
+     #endif // HAS_MESH
+ 
+     buffer_line_to_destination(MMS_SCALED(feedrate_mm_s));
+-    return false;
++    return false; // caller will update current_position
+   }
+ 
+ #endif // !IS_KINEMATIC
+@@ -13509,7 +13481,7 @@ void prepare_move_to_destination() {
+      * This is important when there are successive arc motions.
+      */
+     // Vector rotation matrix values
+-    float arc_target[XYZE];
++    float raw[XYZE];
+     const float theta_per_segment = angular_travel / segments,
+                 linear_per_segment = linear_travel / segments,
+                 extruder_per_segment = extruder_travel / segments,
+@@ -13517,10 +13489,10 @@ void prepare_move_to_destination() {
+                 cos_T = 1 - 0.5 * sq(theta_per_segment); // Small angle approximation
+ 
+     // Initialize the linear axis
+-    arc_target[l_axis] = current_position[l_axis];
++    raw[l_axis] = current_position[l_axis];
+ 
+     // Initialize the extruder axis
+-    arc_target[E_AXIS] = current_position[E_AXIS];
++    raw[E_AXIS] = current_position[E_AXIS];
+ 
+     const float fr_mm_s = MMS_SCALED(feedrate_mm_s);
+ 
+@@ -13530,6 +13502,14 @@ void prepare_move_to_destination() {
+       int8_t arc_recalc_count = N_ARC_CORRECTION;
+     #endif
+ 
++    #if ENABLED(SCARA_FEEDRATE_SCALING)
++      // SCARA needs to scale the feed rate from mm/s to degrees/s
++      const float inv_segment_length = 1.0 / (MM_PER_ARC_SEGMENT),
++                  inverse_secs = inv_segment_length * fr_mm_s;
++      float oldA = stepper.get_axis_position_degrees(A_AXIS),
++            oldB = stepper.get_axis_position_degrees(B_AXIS);
++    #endif
++
+     for (uint16_t i = 1; i < segments; i++) { // Iterate (segments-1) times
+ 
+       thermalManager.manage_heater();
+@@ -13561,19 +13541,34 @@ void prepare_move_to_destination() {
+         r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti;
+       }
+ 
+-      // Update arc_target location
+-      arc_target[p_axis] = center_P + r_P;
+-      arc_target[q_axis] = center_Q + r_Q;
+-      arc_target[l_axis] += linear_per_segment;
+-      arc_target[E_AXIS] += extruder_per_segment;
++      // Update raw location
++      raw[p_axis] = center_P + r_P;
++      raw[q_axis] = center_Q + r_Q;
++      raw[l_axis] += linear_per_segment;
++      raw[E_AXIS] += extruder_per_segment;
+ 
+-      clamp_to_software_endstops(arc_target);
++      clamp_to_software_endstops(raw);
+ 
+-      planner.buffer_line_kinematic(arc_target, fr_mm_s, active_extruder);
++      #if ENABLED(SCARA_FEEDRATE_SCALING)
++        // For SCARA scale the feed rate from mm/s to degrees/s
++        // i.e., Complete the angular vector in the given time.
++        inverse_kinematics(raw);
++        ADJUST_DELTA(raw);
++        planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], raw[Z_AXIS], raw[E_AXIS], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder);
++        oldA = delta[A_AXIS]; oldB = delta[B_AXIS];
++      #else
++        planner.buffer_line_kinematic(raw, fr_mm_s, active_extruder);
++      #endif
+     }
+ 
+     // Ensure last segment arrives at target location.
+-    planner.buffer_line_kinematic(cart, fr_mm_s, active_extruder);
++    #if ENABLED(SCARA_FEEDRATE_SCALING)
++      inverse_kinematics(cart);
++      ADJUST_DELTA(cart);
++      planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], cart[Z_AXIS], cart[E_AXIS], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder);
++    #else
++      planner.buffer_line_kinematic(cart, fr_mm_s, active_extruder);
++    #endif
+ 
+     // As far as the parser is concerned, the position is now == target. In reality the
+     // motion control system might still be processing the action and the real tool position
+@@ -14055,7 +14050,7 @@ void manage_inactivity(bool ignore_stepper_queue/*=false*/) {
+     #if ENABLED(DISABLE_INACTIVE_E)
+       disable_e_steppers();
+     #endif
+-    #if ENABLED(AUTO_BED_LEVELING_UBL) && ENABLED(ULTRA_LCD)  // Only needed with an LCD
++    #if ENABLED(AUTO_BED_LEVELING_UBL) && ENABLED(ULTIPANEL)  // Only needed with an LCD
+       ubl.lcd_map_control = defer_return_to_status = false;
+     #endif
+   }
+diff --git a/Marlin/SanityCheck.h b/Marlin/SanityCheck.h
+index f3749c6..2399c42 100644
+--- a/Marlin/SanityCheck.h
++++ b/Marlin/SanityCheck.h
+@@ -105,25 +105,31 @@
+   #error "FILAMENTCHANGEENABLE is now ADVANCED_PAUSE_FEATURE. Please update your configuration."
+ #elif ENABLED(FILAMENT_CHANGE_FEATURE)
+   #error "FILAMENT_CHANGE_FEATURE is now ADVANCED_PAUSE_FEATURE. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_X_POS)
+-  #error "FILAMENT_CHANGE_X_POS is now PAUSE_PARK_X_POS. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_Y_POS)
+-  #error "FILAMENT_CHANGE_Y_POS is now PAUSE_PARK_Y_POS. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_Z_ADD)
+-  #error "FILAMENT_CHANGE_Z_ADD is now PAUSE_PARK_Z_ADD. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_XY_FEEDRATE)
+-  #error "FILAMENT_CHANGE_XY_FEEDRATE is now PAUSE_PARK_XY_FEEDRATE. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_Z_FEEDRATE)
+-  #error "FILAMENT_CHANGE_Z_FEEDRATE is now PAUSE_PARK_Z_FEEDRATE. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_RETRACT_FEEDRATE)
++#elif defined(FILAMENT_CHANGE_X_POS) || defined(FILAMENT_CHANGE_Y_POS)
++  #error "FILAMENT_CHANGE_[XY]_POS is now set with NOZZLE_PARK_POINT. Please update your configuration."
++#elif defined(FILAMENT_CHANGE_Z_ADD)
++  #error "FILAMENT_CHANGE_Z_ADD is now set with NOZZLE_PARK_POINT. Please update your configuration."
++#elif defined(FILAMENT_CHANGE_XY_FEEDRATE)
++  #error "FILAMENT_CHANGE_XY_FEEDRATE is now NOZZLE_PARK_XY_FEEDRATE. Please update your configuration."
++#elif defined(FILAMENT_CHANGE_Z_FEEDRATE)
++  #error "FILAMENT_CHANGE_Z_FEEDRATE is now NOZZLE_PARK_Z_FEEDRATE. Please update your configuration."
++#elif defined(PAUSE_PARK_X_POS) || defined(PAUSE_PARK_Y_POS)
++  #error "PAUSE_PARK_[XY]_POS is now set with NOZZLE_PARK_POINT. Please update your configuration."
++#elif defined(PAUSE_PARK_Z_ADD)
++  #error "PAUSE_PARK_Z_ADD is now set with NOZZLE_PARK_POINT. Please update your configuration."
++#elif defined(PAUSE_PARK_XY_FEEDRATE)
++  #error "PAUSE_PARK_XY_FEEDRATE is now NOZZLE_PARK_XY_FEEDRATE. Please update your configuration."
++#elif defined(PAUSE_PARK_Z_FEEDRATE)
++  #error "PAUSE_PARK_Z_FEEDRATE is now NOZZLE_PARK_Z_FEEDRATE. Please update your configuration."
++#elif defined(FILAMENT_CHANGE_RETRACT_FEEDRATE)
+   #error "FILAMENT_CHANGE_RETRACT_FEEDRATE is now PAUSE_PARK_RETRACT_FEEDRATE. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_RETRACT_LENGTH)
++#elif defined(FILAMENT_CHANGE_RETRACT_LENGTH)
+   #error "FILAMENT_CHANGE_RETRACT_LENGTH is now PAUSE_PARK_RETRACT_LENGTH. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_EXTRUDE_FEEDRATE)
++#elif defined(FILAMENT_CHANGE_EXTRUDE_FEEDRATE)
+   #error "FILAMENT_CHANGE_EXTRUDE_FEEDRATE is now ADVANCED_PAUSE_EXTRUDE_FEEDRATE. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_EXTRUDE_LENGTH)
++#elif defined(FILAMENT_CHANGE_EXTRUDE_LENGTH)
+   #error "FILAMENT_CHANGE_EXTRUDE_LENGTH is now ADVANCED_PAUSE_EXTRUDE_LENGTH. Please update your configuration."
+-#elif ENABLED(FILAMENT_CHANGE_NOZZLE_TIMEOUT)
++#elif defined(FILAMENT_CHANGE_NOZZLE_TIMEOUT)
+   #error "FILAMENT_CHANGE_NOZZLE_TIMEOUT is now PAUSE_PARK_NOZZLE_TIMEOUT. Please update your configuration."
+ #elif ENABLED(FILAMENT_CHANGE_NO_STEPPER_TIMEOUT)
+   #error "FILAMENT_CHANGE_NO_STEPPER_TIMEOUT is now PAUSE_PARK_NO_STEPPER_TIMEOUT. Please update your configuration."
+@@ -408,6 +414,8 @@ static_assert(X_MAX_LENGTH >= X_BED_SIZE && Y_MAX_LENGTH >= Y_BED_SIZE,
+     #error "PARK_HEAD_ON_PAUSE requires SDSUPPORT, EMERGENCY_PARSER, or an LCD controller."
+   #elif ENABLED(HOME_BEFORE_FILAMENT_CHANGE) && DISABLED(PAUSE_PARK_NO_STEPPER_TIMEOUT)
+     #error "HOME_BEFORE_FILAMENT_CHANGE requires PAUSE_PARK_NO_STEPPER_TIMEOUT"
++  #elif DISABLED(NOZZLE_PARK_FEATURE)
++    #error "ADVANCED_PAUSE_FEATURE requires NOZZLE_PARK_FEATURE"
+   #endif
+ #endif
+ 
+diff --git a/Marlin/Version.h b/Marlin/Version.h
+index 4fd0bed..94f08b7 100644
+--- a/Marlin/Version.h
++++ b/Marlin/Version.h
+@@ -35,7 +35,7 @@
+   /**
+    * Marlin release version identifier
+    */
+-  #define SHORT_BUILD_VERSION "1.1.7"
++  #define SHORT_BUILD_VERSION "1.1.8"
+ 
+   /**
+    * Verbose version identifier which should contain a reference to the location
+@@ -48,7 +48,7 @@
+    * here we define this default string as the date where the latest release
+    * version was tagged.
+    */
+-  #define STRING_DISTRIBUTION_DATE "2017-12-15 12:00"
++  #define STRING_DISTRIBUTION_DATE "2017-12-25 12:00"
+ 
+   /**
+    * Required minimum Configuration.h and Configuration_adv.h file versions.
+@@ -89,6 +89,6 @@
+    * The WEBSITE_URL is the location where users can get more information such as
+    * documentation about a specific Marlin release.
+    */
+-  #define WEBSITE_URL "http://marlinfw.org"
++  #define WEBSITE_URL "https://vk.com/zav3d"
+ 
+ #endif // USE_AUTOMATIC_VERSIONING
+diff --git a/Marlin/_Bootscreen.h b/Marlin/_Bootscreen.h
+new file mode 100644
+index 0000000..851ae0d
+--- /dev/null
++++ b/Marlin/_Bootscreen.h
+@@ -0,0 +1,103 @@
++/**
++ * Marlin 3D Printer Firmware
++ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
++ *
++ * Based on Sprinter and grbl.
++ * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ */
++
++/**
++ * Custom Bitmap for splashscreen
++ *
++ * You may use one of the following tools to generate the C++ bitmap array from
++ * a black and white image:
++ *
++ *  - http://www.marlinfw.org/tools/u8glib/converter.html
++ *  - http://www.digole.com/tools/PicturetoC_Hex_converter.php
++ */
++#include <avr/pgmspace.h>
++
++#define CUSTOM_BOOTSCREEN_TIMEOUT   3500
++#define CUSTOM_BOOTSCREEN_BMPWIDTH  128
++#define CUSTOM_BOOTSCREEN_BMPHEIGHT 64
++
++const unsigned char custom_start_bmp[1024] PROGMEM = {
++0x00,0x00,0x00,0x03,0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x01,0xff,0xe0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x7f,0xff,0xf8,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x03,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x7f,0xff,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x7f,0x8f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x3f,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xf0
++,0x3f,0xff,0xff,0xff,0xff,0xc0,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfc
++,0x7f,0xff,0xff,0xff,0xff,0xe1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xfe
++,0xff,0xff,0xff,0xff,0xff,0xf3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0xf3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0xe3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0x87,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xfe,0x1f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xf8,0x7f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xe1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0x80,0x1f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xfe,0x00,0x00,0x3f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xfe,0x00,0x00,0x00,0x7f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xc0,0x00,0x00,0x0f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0x80,0x00,0x07,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0xfc,0x00,0x1f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0xe0,0x00,0x3f,0xff,0xe0,0x3f,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xff,0x80,0x01,0xff,0xff,0x80,0x3f,0xff,0xff,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xfc,0x00,0x0f,0xff,0xfc,0x00,0x3f,0xfc,0x3f,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xe0,0x00,0x7f,0xff,0xf0,0x00,0x7f,0xf0,0x07,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0x00,0x01,0xff,0xff,0xc0,0x00,0xff,0xe0,0x0f,0xff,0xff,0xff
++,0xff,0xff,0xff,0xfc,0x00,0x0f,0xff,0xff,0x00,0x01,0xff,0xc0,0x0f,0xff,0xf9,0xff
++,0xff,0xff,0xff,0xe0,0x00,0x7f,0xff,0xfc,0x00,0x01,0xff,0xc0,0x1f,0xff,0xc0,0x1f
++,0xff,0xff,0xff,0x00,0x03,0xff,0xff,0xf0,0x00,0x03,0xff,0x80,0x3f,0xff,0x00,0x1f
++,0xff,0xff,0xf8,0x00,0x1f,0xff,0xff,0xc0,0x08,0x07,0xff,0x00,0x7f,0xfc,0x00,0x7f
++,0xff,0xff,0xe0,0x00,0x7f,0xff,0xff,0x00,0x30,0x07,0xff,0x00,0x7f,0xf0,0x01,0xff
++,0xff,0xff,0x00,0x03,0xff,0xff,0xfc,0x00,0xe0,0x0f,0xfe,0x00,0xff,0xc0,0x07,0xff
++,0xff,0xf8,0x00,0x1f,0xff,0xff,0xf0,0x03,0xc0,0x1f,0xfc,0x01,0xff,0x00,0x1f,0xff
++,0xff,0xc0,0x00,0xff,0xff,0xff,0xc0,0x07,0x80,0x3f,0xf8,0x01,0xfc,0x00,0xff,0xff
++,0xff,0x00,0x03,0xff,0xff,0xff,0x00,0x00,0x00,0x3f,0xf8,0x03,0xe0,0x03,0xff,0xff
++,0xfc,0x00,0x00,0xff,0xff,0xfc,0x00,0x00,0x00,0x7f,0xf0,0x07,0x80,0x0f,0xff,0xff
++,0xfc,0x00,0x00,0x03,0xff,0xe0,0x00,0x00,0x00,0xff,0xe0,0x0e,0x00,0x3f,0xff,0xff
++,0xff,0x00,0x00,0x00,0xff,0x80,0x0f,0xf0,0x01,0xff,0xe0,0x08,0x00,0xff,0xff,0xff
++,0xff,0xfc,0x00,0x00,0x7e,0x00,0x3f,0xfc,0x01,0xff,0xc0,0x00,0x03,0xff,0xff,0xff
++,0xff,0xff,0xf8,0x00,0x78,0x00,0xff,0xf8,0x03,0xff,0x80,0x00,0x0f,0xff,0xff,0xff
++,0xff,0xff,0xff,0xe0,0x30,0x03,0xff,0xf0,0x07,0xff,0x00,0x00,0x3f,0xff,0xff,0xff
++,0xff,0xff,0xff,0xff,0xf8,0x0f,0xff,0xe0,0x0f,0xff,0x00,0x00,0xff,0xff,0xff,0xfe
++,0xfe,0x1c,0xff,0xff,0xff,0xff,0xff,0xe0,0x0f,0xfe,0x00,0x07,0xff,0xff,0xff,0xf8
++,0xfe,0x4c,0x1f,0xff,0xff,0xff,0xff,0xc0,0x1f,0xfc,0x00,0x1f,0xff,0xff,0xff,0xe0
++,0xff,0xc4,0xcf,0xe3,0xff,0xff,0xff,0xe0,0x3f,0xfc,0x00,0x7f,0xff,0xff,0xff,0x80
++,0xff,0x0c,0xe7,0xe0,0x7f,0xff,0xff,0xff,0xff,0xf8,0x01,0xff,0xff,0xff,0xfe,0x00
++,0xfd,0xcc,0xe7,0xe7,0x20,0x7f,0xff,0xff,0xff,0xf8,0x07,0xff,0xff,0xff,0xf8,0x00
++,0xfc,0xc4,0xe7,0xe6,0x27,0x33,0x7f,0xff,0xff,0xfe,0x3f,0xff,0xff,0xff,0xe0,0x00
++,0xfe,0x0c,0xc7,0xe0,0x63,0x33,0x39,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x80,0x00
++,0x0f,0xfe,0x0f,0xe7,0xe0,0x33,0x19,0xc0,0xff,0xff,0xff,0xff,0xff,0xfe,0x00,0x00
++,0x00,0x3f,0xff,0xe7,0xe7,0x33,0x09,0xf3,0xc0,0xff,0xff,0xff,0xff,0xf8,0x00,0x00
++,0x00,0x00,0x7f,0xff,0xe7,0x33,0x21,0xf3,0xcf,0xc0,0xff,0xff,0xff,0xe0,0x00,0x00
++,0x00,0x00,0x00,0xff,0xff,0x33,0x21,0xf3,0xcf,0xc6,0x3f,0xff,0xff,0x80,0x00,0x00
++,0x00,0x00,0x00,0x01,0xff,0xf3,0x31,0xf3,0xc1,0xc7,0x3f,0xff,0xfe,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x07,0xff,0xf9,0xf3,0xcf,0xc0,0x3f,0xff,0xf8,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x07,0xff,0xf3,0xcf,0xc4,0x7f,0xff,0xc0,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x3f,0xff,0xc0,0xc7,0x3f,0xff,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xc7,0x3f,0xfe,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0xff,0xff,0x3f,0xf8,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0xff,0xff,0xe0,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x07,0xff,0x80,0x00,0x00,0x00,0x00
++,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
++};
+diff --git a/Marlin/cardreader.cpp b/Marlin/cardreader.cpp
+index c1b42e8..4d56438 100644
+--- a/Marlin/cardreader.cpp
++++ b/Marlin/cardreader.cpp
+@@ -891,8 +891,9 @@ void CardReader::printingHasFinished() {
+   }
+   else {
+     sdprinting = false;
+-    if (SD_FINISHED_STEPPERRELEASE)
+-      enqueue_and_echo_commands_P(PSTR(SD_FINISHED_RELEASECOMMAND));
++    #if ENABLED(SD_FINISHED_STEPPERRELEASE) && defined(SD_FINISHED_RELEASECOMMAND)
++      stepper.cleaning_buffer_counter = 1; // The command will fire from the Stepper ISR
++    #endif
+     print_job_timer.stop();
+     if (print_job_timer.duration() > 60)
+       enqueue_and_echo_commands_P(PSTR("M31"));
+diff --git a/Marlin/configuration_store.cpp b/Marlin/configuration_store.cpp
+index aed7add..eb646bb 100644
+--- a/Marlin/configuration_store.cpp
++++ b/Marlin/configuration_store.cpp
+@@ -141,7 +141,7 @@
+  *  539  M200 D    parser.volumetric_enabled        (bool)
+  *  540  M200 T D  planner.filament_size            (float x5) (T0..3)
+  *
+- * HAVE_TMC2130 || HAVE_TMC2208:                    22 bytes
++ * HAS_TRINAMIC:                                    22 bytes
+  *  560  M906 X    Stepper X current                (uint16_t)
+  *  562  M906 Y    Stepper Y current                (uint16_t)
+  *  564  M906 Z    Stepper Z current                (uint16_t)
+@@ -203,7 +203,7 @@ MarlinSettings settings;
+   #include "mesh_bed_leveling.h"
+ #endif
+ 
+-#if ENABLED(HAVE_TMC2130) || ENABLED(HAVE_TMC2208)
++#if HAS_TRINAMIC
+   #include "stepper_indirection.h"
+ #endif
+ 
+@@ -240,6 +240,9 @@ void MarlinSettings::postprocess() {
+ 
+   #if DISABLED(NO_VOLUMETRICS)
+     planner.calculate_volumetric_multipliers();
++  #else
++    for (uint8_t i = COUNT(planner.e_factor); i--;)
++      planner.refresh_e_factor(i);
+   #endif
+ 
+   #if HAS_HOME_OFFSET || ENABLED(DUAL_X_CARRIAGE)
+@@ -283,7 +286,7 @@ void MarlinSettings::postprocess() {
+   bool MarlinSettings::eeprom_error;
+ 
+   #if ENABLED(AUTO_BED_LEVELING_UBL)
+-    int MarlinSettings::meshes_begin;
++    int16_t MarlinSettings::meshes_begin;
+   #endif
+ 
+   void MarlinSettings::write_data(int &pos, const uint8_t *value, uint16_t size, uint16_t *crc) {
+@@ -383,9 +386,8 @@ void MarlinSettings::postprocess() {
+         sizeof(mbl.z_values) == GRID_MAX_POINTS * sizeof(mbl.z_values[0][0]),
+         "MBL Z array is the wrong size."
+       );
+-      const bool leveling_is_on = mbl.has_mesh;
+       const uint8_t mesh_num_x = GRID_MAX_POINTS_X, mesh_num_y = GRID_MAX_POINTS_Y;
+-      EEPROM_WRITE(leveling_is_on);
++      EEPROM_WRITE(mbl.has_mesh);
+       EEPROM_WRITE(mbl.z_offset);
+       EEPROM_WRITE(mesh_num_x);
+       EEPROM_WRITE(mesh_num_y);
+@@ -581,7 +583,7 @@ void MarlinSettings::postprocess() {
+         EEPROM_WRITE(dummy);
+       }
+ 
+-    #endif // !NO_VOLUMETRICS
++    #endif
+ 
+     // Save TMC2130 or TMC2208 Configuration, and placeholder values
+     uint16_t val;
+@@ -1282,7 +1284,7 @@ void MarlinSettings::postprocess() {
+       }
+     #endif
+ 
+-    int MarlinSettings::calc_num_meshes() {
++    uint16_t MarlinSettings::calc_num_meshes() {
+       //obviously this will get more sophisticated once we've added an actual MAT
+ 
+       if (meshes_begin <= 0) return 0;
+@@ -1290,10 +1292,10 @@ void MarlinSettings::postprocess() {
+       return (meshes_end - meshes_begin) / sizeof(ubl.z_values);
+     }
+ 
+-    void MarlinSettings::store_mesh(int8_t slot) {
++    void MarlinSettings::store_mesh(const int8_t slot) {
+ 
+       #if ENABLED(AUTO_BED_LEVELING_UBL)
+-        const int a = calc_num_meshes();
++        const uint16_t a = calc_num_meshes();
+         if (!WITHIN(slot, 0, a - 1)) {
+           #if ENABLED(EEPROM_CHITCHAT)
+             ubl_invalid_slot(a);
+@@ -1323,11 +1325,11 @@ void MarlinSettings::postprocess() {
+       #endif
+     }
+ 
+-    void MarlinSettings::load_mesh(int8_t slot, void *into /* = 0 */) {
++    void MarlinSettings::load_mesh(const int8_t slot, void * const into/*=NULL*/) {
+ 
+       #if ENABLED(AUTO_BED_LEVELING_UBL)
+ 
+-        const int16_t a = settings.calc_num_meshes();
++        const uint16_t a = settings.calc_num_meshes();
+ 
+         if (!WITHIN(slot, 0, a - 1)) {
+           #if ENABLED(EEPROM_CHITCHAT)
+@@ -1385,17 +1387,13 @@ void MarlinSettings::reset() {
+   planner.retract_acceleration = DEFAULT_RETRACT_ACCELERATION;
+   planner.travel_acceleration = DEFAULT_TRAVEL_ACCELERATION;
+   planner.min_feedrate_mm_s = DEFAULT_MINIMUMFEEDRATE;
+-  planner.min_segment_time_us = DEFAULT_MINSEGMENTTIME;
+   planner.min_travel_feedrate_mm_s = DEFAULT_MINTRAVELFEEDRATE;
++  planner.min_segment_time_us = DEFAULT_MINSEGMENTTIME;
+   planner.max_jerk[X_AXIS] = DEFAULT_XJERK;
+   planner.max_jerk[Y_AXIS] = DEFAULT_YJERK;
+   planner.max_jerk[Z_AXIS] = DEFAULT_ZJERK;
+   planner.max_jerk[E_AXIS] = DEFAULT_EJERK;
+ 
+-  #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+-    new_z_fade_height = 10.0;
+-  #endif
+-
+   #if HAS_HOME_OFFSET
+     ZERO(home_offset);
+   #endif
+@@ -1417,7 +1415,14 @@ void MarlinSettings::reset() {
+     LOOP_XYZ(i) HOTEND_LOOP() hotend_offset[i][e] = tmp4[i][e];
+   #endif
+ 
+-  // Applies to all MBL and ABL
++  //
++  // Global Leveling
++  //
++
++  #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
++    new_z_fade_height = 0.0;
++  #endif
++
+   #if HAS_LEVELING
+     reset_bed_level();
+   #endif
+@@ -1478,10 +1483,6 @@ void MarlinSettings::reset() {
+     lcd_preheat_fan_speed[1] = PREHEAT_2_FAN_SPEED;
+   #endif
+ 
+-  #if HAS_LCD_CONTRAST
+-    lcd_contrast = DEFAULT_LCD_CONTRAST;
+-  #endif
+-
+   #if ENABLED(PIDTEMP)
+     #if ENABLED(PID_PARAMS_PER_HOTEND) && HOTENDS > 1
+       HOTEND_LOOP()
+@@ -1505,6 +1506,10 @@ void MarlinSettings::reset() {
+     thermalManager.bedKd = scalePID_d(DEFAULT_bedKd);
+   #endif
+ 
++  #if HAS_LCD_CONTRAST
++    lcd_contrast = DEFAULT_LCD_CONTRAST;
++  #endif
++
+   #if ENABLED(FWRETRACT)
+     autoretract_enabled = false;
+     retract_length = RETRACT_LENGTH;
+@@ -1599,10 +1604,6 @@ void MarlinSettings::reset() {
+       stepper.digipot_current(q, (stepper.motor_current_setting[q] = tmp_motor_current_setting[q]));
+   #endif
+ 
+-  #if ENABLED(AUTO_BED_LEVELING_UBL)
+-    ubl.reset();
+-  #endif
+-
+   #if ENABLED(SKEW_CORRECTION_GCODE)
+     planner.xy_skew_factor = XY_SKEW_FACTOR;
+     #if ENABLED(SKEW_CORRECTION_FOR_Z)
+@@ -1710,7 +1711,7 @@ void MarlinSettings::reset() {
+         SERIAL_ECHOLNPGM("  M200 D0");
+       }
+ 
+-    #endif
++    #endif // !NO_VOLUMETRICS
+ 
+     if (!forReplay) {
+       CONFIG_ECHO_START;
+@@ -2062,7 +2063,7 @@ void MarlinSettings::reset() {
+     /**
+      * TMC2130 stepper driver current
+      */
+-    #if ENABLED(HAVE_TMC2130)
++    #if HAS_TRINAMIC
+       if (!forReplay) {
+         CONFIG_ECHO_START;
+         SERIAL_ECHOLNPGM("Stepper driver current:");
+@@ -2108,7 +2109,7 @@ void MarlinSettings::reset() {
+     /**
+      * TMC2130 Sensorless homing thresholds
+      */
+-    #if ENABLED(HAVE_TMC2130) && ENABLED(SENSORLESS_HOMING)
++    #if ENABLED(SENSORLESS_HOMING)
+       if (!forReplay) {
+         CONFIG_ECHO_START;
+         SERIAL_ECHOLNPGM("Sensorless homing threshold:");
+diff --git a/Marlin/configuration_store.h b/Marlin/configuration_store.h
+index b20a8d4..e152e48 100644
+--- a/Marlin/configuration_store.h
++++ b/Marlin/configuration_store.h
+@@ -37,11 +37,11 @@ class MarlinSettings {
+ 
+       #if ENABLED(AUTO_BED_LEVELING_UBL) // Eventually make these available if any leveling system
+                                          // That can store is enabled
+-        FORCE_INLINE static int get_start_of_meshes() { return meshes_begin; }
+-        FORCE_INLINE static int get_end_of_meshes() { return meshes_end; }
+-        static int calc_num_meshes();
+-        static void store_mesh(int8_t slot);
+-        static void load_mesh(int8_t slot, void *into = 0);
++        FORCE_INLINE static int16_t get_start_of_meshes() { return meshes_begin; }
++        FORCE_INLINE static int16_t get_end_of_meshes() { return meshes_end; }
++        static uint16_t calc_num_meshes();
++        static void store_mesh(const int8_t slot);
++        static void load_mesh(const int8_t slot, void * const into=NULL);
+ 
+         //static void delete_mesh();    // necessary if we have a MAT
+         //static void defrag_meshes();  // "
+@@ -66,9 +66,9 @@ class MarlinSettings {
+ 
+       #if ENABLED(AUTO_BED_LEVELING_UBL) // Eventually make these available if any leveling system
+                                          // That can store is enabled
+-        static int meshes_begin;
+-        const static int meshes_end = E2END - 128; // 128 is a placeholder for the size of the MAT; the MAT will always
+-                                                   // live at the very end of the eeprom
++        static int16_t meshes_begin;
++        const static int16_t meshes_end = E2END - 128; // 128 is a placeholder for the size of the MAT; the MAT will always
++                                                       // live at the very end of the eeprom
+ 
+       #endif
+ 
+diff --git a/Marlin/language_cz.h b/Marlin/language_cz.h
+index edcc961..5fab5b1 100644
+--- a/Marlin/language_cz.h
++++ b/Marlin/language_cz.h
+@@ -78,6 +78,8 @@
+ #define MSG_MOVE_AXIS                       _UxGT("Posunout osy")
+ #define MSG_BED_LEVELING                    _UxGT("Vyrovnat podlozku")
+ #define MSG_LEVEL_BED                       _UxGT("Vyrovnat podlozku")
++#define MSG_LEVEL_CORNERS                   _UxGT("Vyrovnat rohy")
++#define MSG_NEXT_CORNER                     _UxGT("Dalsi roh")
+ #define MSG_EDITING_STOPPED                 _UxGT("Konec uprav site")
+ 
+ #define MSG_UBL_DOING_G29                   _UxGT("Provadim G29")
+@@ -95,6 +97,7 @@
+ #define MSG_UBL_CUSTOM_BED_TEMP             MSG_UBL_SET_BED_TEMP
+ #define MSG_UBL_SET_HOTEND_TEMP             _UxGT("Teplota hotendu")
+ #define MSG_UBL_CUSTOM_HOTEND_TEMP          MSG_UBL_SET_HOTEND_TEMP
++#define MSG_UBL_MESH_EDIT                   _UxGT("Uprava site bodu")
+ #define MSG_UBL_EDIT_CUSTOM_MESH            _UxGT("Upravit vlastni sit")
+ #define MSG_UBL_FINE_TUNE_MESH              _UxGT("Doladit sit bodu")
+ #define MSG_UBL_DONE_EDITING_MESH           _UxGT("Konec uprav site")
+@@ -134,13 +137,36 @@
+ #define MSG_UBL_STORAGE_SLOT                _UxGT("Pametovy slot")
+ #define MSG_UBL_LOAD_MESH                   _UxGT("Nacist sit bodu")
+ #define MSG_UBL_SAVE_MESH                   _UxGT("Ulozit sit bodu")
++#define MSG_MESH_LOADED                     _UxGT("Sit %i nactena")
++#define MSG_NO_STORAGE                      _UxGT("Nedostatek mista")
++#define MSG_MESH_SAVED                      _UxGT("Sit %i ulozena")
+ #define MSG_UBL_SAVE_ERROR                  _UxGT("Err: Ulozit UBL")
+ #define MSG_UBL_RESTORE_ERROR               _UxGT("Err: Obnovit UBL")
+ #define MSG_UBL_Z_OFFSET_STOPPED            _UxGT("Konec Z-Offsetu")
+ #define MSG_UBL_STEP_BY_STEP_MENU           _UxGT("UBL Postupne")
+ 
++#define MSG_LED_CONTROL                     _UxGT("LED Nastaveni")
++#define MSG_LEDS_ON                         _UxGT("Svetla Zap")
++#define MSG_LEDS_OFF                        _UxGT("Svetla Vyp")
++#define MSG_LED_PRESETS                     _UxGT("Svetla Predvolby")
++#define MSG_SET_LEDS_RED                    _UxGT("Svetla Cervena")
++#define MSG_SET_LEDS_ORANGE                 _UxGT("Svetla Oranzova")
++#define MSG_SET_LEDS_YELLOW                 _UxGT("Svetla Zluta")
++#define MSG_SET_LEDS_GREEN                  _UxGT("Svetla Zelena")
++#define MSG_SET_LEDS_BLUE                   _UxGT("Svetla Modra")
++#define MSG_SET_LEDS_INDIGO                 _UxGT("Svetla Indigo")
++#define MSG_SET_LEDS_VIOLET                 _UxGT("Svetla Fialova")
++#define MSG_SET_LEDS_WHITE                  _UxGT("Svetla Bila")
++#define MSG_SET_LEDS_DEFAULT                _UxGT("Svetla Vychozi")
++#define MSG_CUSTOM_LEDS                     _UxGT("Vlastni svetla")
++#define MSG_INTENSITY_R                     _UxGT("Cervena intenzita")
++#define MSG_INTENSITY_G                     _UxGT("Zelena intezita")
++#define MSG_INTENSITY_B                     _UxGT("Modra intenzita")
++#define MSG_INTENSITY_W                     _UxGT("Bila intenzita")
++#define MSG_LED_BRIGHTNESS                  _UxGT("Jas")
++
+ #define MSG_USER_MENU                       _UxGT("Vlastni prikazy")
+-#define MSG_MOVING                          _UxGT("Posunování...")
++#define MSG_MOVING                          _UxGT("Posouvani...")
+ #define MSG_FREE_XY                         _UxGT("Uvolnit XY")
+ #define MSG_MOVE_X                          _UxGT("Posunout X")
+ #define MSG_MOVE_Y                          _UxGT("Posunout Y")
+@@ -154,6 +180,7 @@
+ #define MSG_NOZZLE                          _UxGT("Tryska")
+ #define MSG_BED                             _UxGT("Podlozka")
+ #define MSG_FAN_SPEED                       _UxGT("Rychlost vent.")
++#define MSG_EXTRA_FAN_SPEED                 _UxGT("Rychlost ex. vent.")
+ #define MSG_FLOW                            _UxGT("Prutok")
+ #define MSG_CONTROL                         _UxGT("Ovladani")
+ #define MSG_MIN                             _UxGT(" ") LCD_STR_THERMOMETER _UxGT(" Min")
+@@ -226,11 +253,13 @@
+ #define MSG_CONTROL_RETRACT_RECOVER         _UxGT("UnRet mm")
+ #define MSG_CONTROL_RETRACT_RECOVER_SWAP    _UxGT("S UnRet mm")
+ #define MSG_CONTROL_RETRACT_RECOVERF        _UxGT("UnRet  V")
++#define MSG_CONTROL_RETRACT_RECOVER_SWAPF   _UxGT("S UnRet V")
+ #define MSG_AUTORETRACT                     _UxGT("AutoRetr.")
+ #define MSG_FILAMENTCHANGE                  _UxGT("Vymenit filament")
+ #define MSG_INIT_SDCARD                     _UxGT("Nacist SD kartu")
+ #define MSG_CNG_SDCARD                      _UxGT("Vymenit SD kartu")
+ #define MSG_ZPROBE_OUT                      _UxGT("Sonda Z mimo podl")
++#define MSG_SKEW_FACTOR                     _UxGT("Faktor zkoseni")
+ #define MSG_BLTOUCH                         _UxGT("BLTouch")
+ #define MSG_BLTOUCH_SELFTEST                _UxGT("BLTouch Self-Test")
+ #define MSG_BLTOUCH_RESET                   _UxGT("BLTouch Reset")
+@@ -265,8 +294,12 @@
+ #define MSG_DELTA_CALIBRATE_Y               _UxGT("Kalibrovat Y")
+ #define MSG_DELTA_CALIBRATE_Z               _UxGT("Kalibrovat Z")
+ #define MSG_DELTA_CALIBRATE_CENTER          _UxGT("Kalibrovat Stred")
++#define MSG_DELTA_SETTINGS                  _UxGT("Delta nastaveni")
+ #define MSG_DELTA_AUTO_CALIBRATE            _UxGT("Autokalibrace")
+ #define MSG_DELTA_HEIGHT_CALIBRATE          _UxGT("Nast.vysku delty")
++#define MSG_DELTA_DIAG_ROD                  _UxGT("Diag rameno")
++#define MSG_DELTA_HEIGHT                    _UxGT("Vyska")
++#define MSG_DELTA_RADIUS                    _UxGT("Polomer")
+ #define MSG_INFO_MENU                       _UxGT("O tiskarne")
+ #define MSG_INFO_PRINTER_MENU               _UxGT("Info o tiskarne")
+ #define MSG_3POINT_LEVELING                 _UxGT("3-bodove rovnani")
+@@ -303,13 +336,14 @@
+ #define MSG_DRIVE_STRENGTH                  _UxGT("Buzeni motoru")
+ #define MSG_DAC_PERCENT                     _UxGT("Motor %")
+ #define MSG_DAC_EEPROM_WRITE                _UxGT("Ulozit do EEPROM")
+-
+ #define MSG_FILAMENT_CHANGE_HEADER          _UxGT("PRINT PAUSED")
+ #define MSG_FILAMENT_CHANGE_OPTION_HEADER   _UxGT("RESUME OPTIONS:")
+ #define MSG_FILAMENT_CHANGE_OPTION_EXTRUDE  _UxGT("Jeste vytlacit")
+ #define MSG_FILAMENT_CHANGE_OPTION_RESUME   _UxGT("Obnovit tisk")
+ #define MSG_FILAMENT_CHANGE_MINTEMP         _UxGT("Min. teplota je ")
+ #define MSG_FILAMENT_CHANGE_NOZZLE          _UxGT("  Tryska: ")
++#define MSG_ERR_HOMING_FAILED               _UxGT("Parkovani selhalo")
++#define MSG_ERR_PROBING_FAILED              _UxGT("Kalibrace selhala")
+ 
+ #if LCD_HEIGHT >= 4
+   // Up to 3 lines allowed
+diff --git a/Marlin/language_cz_utf8.h b/Marlin/language_cz_utf8.h
+index 09f9954..cad7d2a 100644
+--- a/Marlin/language_cz_utf8.h
++++ b/Marlin/language_cz_utf8.h
+@@ -80,6 +80,8 @@
+ #define MSG_MOVE_AXIS                       _UxGT("Posunout osy")
+ #define MSG_BED_LEVELING                    _UxGT("Vyrovnat podložku")
+ #define MSG_LEVEL_BED                       _UxGT("Vyrovnat podložku")
++#define MSG_LEVEL_CORNERS                   _UxGT("Vyrovnat rohy")
++#define MSG_NEXT_CORNER                     _UxGT("Další roh")
+ #define MSG_EDITING_STOPPED                 _UxGT("Konec úprav sítě")
+ 
+ #define MSG_UBL_DOING_G29                   _UxGT("Provádím G29")
+@@ -97,6 +99,7 @@
+ #define MSG_UBL_CUSTOM_BED_TEMP             MSG_UBL_SET_BED_TEMP
+ #define MSG_UBL_SET_HOTEND_TEMP             _UxGT("Teplota hotendu")
+ #define MSG_UBL_CUSTOM_HOTEND_TEMP          MSG_UBL_SET_HOTEND_TEMP
++#define MSG_UBL_MESH_EDIT                   _UxGT("Úprava sítě bodů")
+ #define MSG_UBL_EDIT_CUSTOM_MESH            _UxGT("Upravit vlastní síť")
+ #define MSG_UBL_FINE_TUNE_MESH              _UxGT("Doladit síť bodů")
+ #define MSG_UBL_DONE_EDITING_MESH           _UxGT("Konec úprav sítě")
+@@ -104,7 +107,7 @@
+ #define MSG_UBL_BUILD_MESH_MENU             _UxGT("Vytvořit síť")
+ #define MSG_UBL_BUILD_PLA_MESH              _UxGT("Síť bodu PLA")
+ #define MSG_UBL_BUILD_ABS_MESH              _UxGT("Síť bodu ABS")
+-#define MSG_UBL_BUILD_COLD_MESH             _UxGT("Studená síť bodu")
++#define MSG_UBL_BUILD_COLD_MESH             _UxGT("Studená síť bodů")
+ #define MSG_UBL_MESH_HEIGHT_ADJUST          _UxGT("Upravit výšku sítě")
+ #define MSG_UBL_MESH_HEIGHT_AMOUNT          _UxGT("Výška")
+ #define MSG_UBL_VALIDATE_MESH_MENU          _UxGT("Zkontrolovat síť")
+@@ -136,13 +139,36 @@
+ #define MSG_UBL_STORAGE_SLOT                _UxGT("Paměťový slot")
+ #define MSG_UBL_LOAD_MESH                   _UxGT("Načíst síť bodů")
+ #define MSG_UBL_SAVE_MESH                   _UxGT("Uložit síť bodů")
++#define MSG_MESH_LOADED                     _UxGT("Síť %i načtena")
++#define MSG_MESH_SAVED                      _UxGT("Síť %i uložena")
++#define MSG_NO_STORAGE                      _UxGT("Nedostatek místa")
+ #define MSG_UBL_SAVE_ERROR                  _UxGT("Err: Uložit UBL")
+ #define MSG_UBL_RESTORE_ERROR               _UxGT("Err: Obnovit UBL")
+ #define MSG_UBL_Z_OFFSET_STOPPED            _UxGT("Konec Z-Offsetu")
+ #define MSG_UBL_STEP_BY_STEP_MENU           _UxGT("UBL Postupně")
+ 
++#define MSG_LED_CONTROL                     _UxGT("LED Nastavení")
++#define MSG_LEDS_ON                         _UxGT("Světla Zap")
++#define MSG_LEDS_OFF                        _UxGT("Světla Vyp")
++#define MSG_LED_PRESETS                     _UxGT("Světla Předvolby")
++#define MSG_SET_LEDS_RED                    _UxGT("Světla Červená")
++#define MSG_SET_LEDS_ORANGE                 _UxGT("Světla Oranžová")
++#define MSG_SET_LEDS_YELLOW                 _UxGT("Světla Žlutá")
++#define MSG_SET_LEDS_GREEN                  _UxGT("Světla Zelená")
++#define MSG_SET_LEDS_BLUE                   _UxGT("Světla Modrá")
++#define MSG_SET_LEDS_INDIGO                 _UxGT("Světla Indigo")
++#define MSG_SET_LEDS_VIOLET                 _UxGT("Světla Fialová")
++#define MSG_SET_LEDS_WHITE                  _UxGT("Světla Bílá")
++#define MSG_SET_LEDS_DEFAULT                _UxGT("Světla Výchozí")
++#define MSG_CUSTOM_LEDS                     _UxGT("Vlastní světla")
++#define MSG_INTENSITY_R                     _UxGT("Červená intenzita")
++#define MSG_INTENSITY_G                     _UxGT("Zelená intezita")
++#define MSG_INTENSITY_B                     _UxGT("Modrá intenzita")
++#define MSG_INTENSITY_W                     _UxGT("Bílá intenzita")
++#define MSG_LED_BRIGHTNESS                  _UxGT("Jas")
++
+ #define MSG_USER_MENU                       _UxGT("Vlastní příkazy")
+-#define MSG_MOVING                          _UxGT("Posouvání...")
++#define MSG_MOVING                          _UxGT("Posouvani...")
+ #define MSG_FREE_XY                         _UxGT("Uvolnit XY")
+ #define MSG_MOVE_X                          _UxGT("Posunout X")
+ #define MSG_MOVE_Y                          _UxGT("Posunout Y")
+@@ -156,6 +182,7 @@
+ #define MSG_NOZZLE                          _UxGT("Tryska")
+ #define MSG_BED                             _UxGT("Podložka")
+ #define MSG_FAN_SPEED                       _UxGT("Rychlost vent.")
++#define MSG_EXTRA_FAN_SPEED                 _UxGT("Rychlost ex. vent.")
+ #define MSG_FLOW                            _UxGT("Průtok")
+ #define MSG_CONTROL                         _UxGT("Ovládaní")
+ #define MSG_MIN                             _UxGT(" ") LCD_STR_THERMOMETER _UxGT(" Min")
+@@ -228,11 +255,13 @@
+ #define MSG_CONTROL_RETRACT_RECOVER         _UxGT("UnRet mm")
+ #define MSG_CONTROL_RETRACT_RECOVER_SWAP    _UxGT("S UnRet mm")
+ #define MSG_CONTROL_RETRACT_RECOVERF        _UxGT("UnRet  V")
++#define MSG_CONTROL_RETRACT_RECOVER_SWAPF   _UxGT("S UnRet V")
+ #define MSG_AUTORETRACT                     _UxGT("AutoRetr.")
+ #define MSG_FILAMENTCHANGE                  _UxGT("Vyměnit filament")
+ #define MSG_INIT_SDCARD                     _UxGT("Načíst SD kartu")
+ #define MSG_CNG_SDCARD                      _UxGT("Vyměnit SD kartu")
+ #define MSG_ZPROBE_OUT                      _UxGT("Sonda Z mimo podl")
++#define MSG_SKEW_FACTOR                     _UxGT("Faktor zkosení")
+ #define MSG_BLTOUCH                         _UxGT("BLTouch")
+ #define MSG_BLTOUCH_SELFTEST                _UxGT("BLTouch Self-Test")
+ #define MSG_BLTOUCH_RESET                   _UxGT("BLTouch Reset")
+@@ -267,8 +296,12 @@
+ #define MSG_DELTA_CALIBRATE_Y               _UxGT("Kalibrovat Y")
+ #define MSG_DELTA_CALIBRATE_Z               _UxGT("Kalibrovat Z")
+ #define MSG_DELTA_CALIBRATE_CENTER          _UxGT("Kalibrovat Střed")
++#define MSG_DELTA_SETTINGS                  _UxGT("Delta nastavení")
+ #define MSG_DELTA_AUTO_CALIBRATE            _UxGT("Autokalibrace")
+ #define MSG_DELTA_HEIGHT_CALIBRATE          _UxGT("Nast.výšku delty")
++#define MSG_DELTA_DIAG_ROD                  _UxGT("Diag rameno")
++#define MSG_DELTA_HEIGHT                    _UxGT("Výška")
++#define MSG_DELTA_RADIUS                    _UxGT("Poloměr")
+ #define MSG_INFO_MENU                       _UxGT("O tiskárně")
+ #define MSG_INFO_PRINTER_MENU               _UxGT("Info o tiskárně")
+ #define MSG_3POINT_LEVELING                 _UxGT("3-bodové rovnání")
+@@ -305,13 +338,14 @@
+ #define MSG_DRIVE_STRENGTH                  _UxGT("Buzení motorů")
+ #define MSG_DAC_PERCENT                     _UxGT("Motor %")
+ #define MSG_DAC_EEPROM_WRITE                _UxGT("Uložit do EEPROM")
+-
+ #define MSG_FILAMENT_CHANGE_HEADER          _UxGT("PRINT PAUSED")
+ #define MSG_FILAMENT_CHANGE_OPTION_HEADER   _UxGT("RESUME OPTIONS:")
+ #define MSG_FILAMENT_CHANGE_OPTION_EXTRUDE  _UxGT("Ještě vytlačit")
+ #define MSG_FILAMENT_CHANGE_OPTION_RESUME   _UxGT("Obnovit tisk")
+ #define MSG_FILAMENT_CHANGE_MINTEMP         _UxGT("Min. teplota je ")
+ #define MSG_FILAMENT_CHANGE_NOZZLE          _UxGT("  Tryska: ")
++#define MSG_ERR_HOMING_FAILED               _UxGT("Parkování selhalo")
++#define MSG_ERR_PROBING_FAILED              _UxGT("Kalibrace selhala")
+ 
+ #if LCD_HEIGHT >= 4
+   // Up to 3 lines allowed
+diff --git a/Marlin/language_pt.h b/Marlin/language_pt.h
+index 9896005..a07c208 100644
+--- a/Marlin/language_pt.h
++++ b/Marlin/language_pt.h
+@@ -33,7 +33,7 @@
+ #define DISPLAY_CHARSET_ISO10646_1
+ #define NOT_EXTENDED_ISO10646_1_5X7
+ 
+-#define WELCOME_MSG                         MACHINE_NAME " pronto."
++#define WELCOME_MSG                         MACHINE_NAME " pronta."
+ #define MSG_SD_INSERTED                     "Cartao inserido"
+ #define MSG_SD_REMOVED                      "Cartao removido"
+ #define MSG_MAIN                            "Menu principal"
+diff --git a/Marlin/language_pt_utf8.h b/Marlin/language_pt_utf8.h
+index 4d18ae8..1b01294 100644
+--- a/Marlin/language_pt_utf8.h
++++ b/Marlin/language_pt_utf8.h
+@@ -33,7 +33,7 @@
+ 
+ #define DISPLAY_CHARSET_ISO10646_1
+ 
+-#define WELCOME_MSG                         MACHINE_NAME _UxGT(" pronto.")
++#define WELCOME_MSG                         MACHINE_NAME _UxGT(" pronta.")
+ #define MSG_SD_INSERTED                     _UxGT("Cartão inserido")
+ #define MSG_SD_REMOVED                      _UxGT("Cartão removido")
+ #define MSG_MAIN                            _UxGT("Menu principal")
+diff --git a/Marlin/nozzle.cpp b/Marlin/nozzle.cpp
+index 2967c0c..da43e26 100644
+--- a/Marlin/nozzle.cpp
++++ b/Marlin/nozzle.cpp
+@@ -161,23 +161,24 @@
+ 
+ #if ENABLED(NOZZLE_PARK_FEATURE)
+ 
+-  void Nozzle::park(const uint8_t &z_action) {
+-    const point_t park = NOZZLE_PARK_POINT;
++  void Nozzle::park(const uint8_t &z_action, const point_t &park /*= NOZZLE_PARK_POINT*/) {
++    const float fr_xy = NOZZLE_PARK_XY_FEEDRATE;
++    const float fr_z = NOZZLE_PARK_Z_FEEDRATE;
+ 
+     switch (z_action) {
+       case 1: // Go to Z-park height
+-        do_blocking_move_to_z(park.z);
++        do_blocking_move_to_z(park.z, fr_z);
+         break;
+ 
+       case 2: // Raise by Z-park height
+-        do_blocking_move_to_z(min(current_position[Z_AXIS] + park.z, Z_MAX_POS));
++        do_blocking_move_to_z(min(current_position[Z_AXIS] + park.z, Z_MAX_POS), fr_z);
+         break;
+ 
+       default: // Raise to at least the Z-park height
+-        do_blocking_move_to_z(max(park.z, current_position[Z_AXIS]));
++        do_blocking_move_to_z(max(park.z, current_position[Z_AXIS]), fr_z);
+     }
+ 
+-    do_blocking_move_to_xy(park.x, park.y);
++    do_blocking_move_to_xy(park.x, park.y, fr_xy);
+   }
+ 
+ #endif // NOZZLE_PARK_FEATURE
+diff --git a/Marlin/nozzle.h b/Marlin/nozzle.h
+index 6024fd3..d6cf968 100644
+--- a/Marlin/nozzle.h
++++ b/Marlin/nozzle.h
+@@ -86,7 +86,7 @@ class Nozzle {
+ 
+   #if ENABLED(NOZZLE_PARK_FEATURE)
+ 
+-    static void park(const uint8_t &z_action) _Os;
++    static void park(const uint8_t &z_action, const point_t &park = NOZZLE_PARK_POINT) _Os;
+ 
+   #endif
+ };
+diff --git a/Marlin/pins_GT2560_REV_A.h b/Marlin/pins_GT2560_REV_A.h
+index 125acf8..cb48920 100644
+--- a/Marlin/pins_GT2560_REV_A.h
++++ b/Marlin/pins_GT2560_REV_A.h
+@@ -30,8 +30,11 @@
+   #error "Oops!  Make sure you have 'Arduino Mega' selected from the 'Tools -> Boards' menu."
+ #endif
+ 
+-#define BOARD_NAME           "GT2560 Rev.A"
++#ifndef BOARD_NAME
++  #define BOARD_NAME "GT2560 Rev.A"
++#endif
+ #define DEFAULT_MACHINE_NAME "Prusa i3 Pro B"
++
+ //
+ // Limit Switches
+ //
+diff --git a/Marlin/pins_GT2560_REV_A_PLUS.h b/Marlin/pins_GT2560_REV_A_PLUS.h
+index 16660e0..99399e3 100644
+--- a/Marlin/pins_GT2560_REV_A_PLUS.h
++++ b/Marlin/pins_GT2560_REV_A_PLUS.h
+@@ -24,13 +24,12 @@
+  * Geeetech GT2560 Revision A+ board pin assignments
+  */
+ 
+-#include "pins_GT2560_REV_A.h"
++#define BOARD_NAME "GT2560 Rev.A+"
+ 
+-#undef BOARD_NAME
+-#define BOARD_NAME  "GT2560 Rev.A+"
++#include "pins_GT2560_REV_A.h"
+ 
+ #if ENABLED(BLTOUCH)
+-  #define SERVO0_PIN  32
+-#else
+   #define SERVO0_PIN  11
++#else
++  #define SERVO0_PIN  32
+ #endif
+diff --git a/Marlin/planner.cpp b/Marlin/planner.cpp
+index f83cbd4..ff972c3 100644
+--- a/Marlin/planner.cpp
++++ b/Marlin/planner.cpp
+@@ -94,7 +94,7 @@ float Planner::max_feedrate_mm_s[XYZE_N], // Max speeds in mm per second
+ 
+ int16_t Planner::flow_percentage[EXTRUDERS] = ARRAY_BY_EXTRUDERS1(100); // Extrusion factor for each extruder
+ 
+-float Planner::e_factor[EXTRUDERS];               // The flow percentage and volumetric multiplier combine to scale E movement
++float Planner::e_factor[EXTRUDERS] = ARRAY_BY_EXTRUDERS1(1.0); // The flow percentage and volumetric multiplier combine to scale E movement
+ 
+ #if DISABLED(NO_VOLUMETRICS)
+   float Planner::filament_size[EXTRUDERS],          // diameter of filament (in millimeters), typically around 1.75 or 2.85, 0 disables the volumetric calculations for the extruder
+diff --git a/Marlin/stepper.cpp b/Marlin/stepper.cpp
+index ed93337..664022b 100644
+--- a/Marlin/stepper.cpp
++++ b/Marlin/stepper.cpp
+@@ -436,8 +436,8 @@ void Stepper::isr() {
+     else {
+       planner.discard_current_block();
+       --cleaning_buffer_counter;                // Count down for abort print
+-      #ifdef SD_FINISHED_RELEASECOMMAND
+-        if (!cleaning_buffer_counter && (SD_FINISHED_STEPPERRELEASE)) enqueue_and_echo_commands_P(PSTR(SD_FINISHED_RELEASECOMMAND));
++      #if ENABLED(SD_FINISHED_STEPPERRELEASE) && defined(SD_FINISHED_RELEASECOMMAND)
++        if (!cleaning_buffer_counter) enqueue_and_echo_commands_P(PSTR(SD_FINISHED_RELEASECOMMAND));
+       #endif
+     }
+     current_block = NULL;                       // Prep to get a new block after cleaning
+diff --git a/Marlin/ubl_G29.cpp b/Marlin/ubl_G29.cpp
+index 6b56ffa..e741e39 100644
+--- a/Marlin/ubl_G29.cpp
++++ b/Marlin/ubl_G29.cpp
+@@ -309,7 +309,8 @@
+   void unified_bed_leveling::G29() {
+ 
+     if (!settings.calc_num_meshes()) {
+-      SERIAL_PROTOCOLLNPGM("?Enable EEPROM and init with M502, M500.\n");
++      SERIAL_PROTOCOLLNPGM("?Enable EEPROM and init with");
++      SERIAL_PROTOCOLLNPGM("M502, M500, M501 in that order.\n");
+       return;
+     }
+ 
+diff --git a/Marlin/ubl_motion.cpp b/Marlin/ubl_motion.cpp
+index 07a8b1a..5a8cf8c 100644
+--- a/Marlin/ubl_motion.cpp
++++ b/Marlin/ubl_motion.cpp
+@@ -422,7 +422,7 @@
+ 
+       #if ENABLED(DELTA)  // apply delta inverse_kinematics
+ 
+-        DELTA_RAW_IK();
++        DELTA_IK(raw);
+         planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], in_raw[E_AXIS], fr, active_extruder);
+ 
+       #elif IS_SCARA  // apply scara inverse_kinematics (should be changed to save raw->logical->raw)
+@@ -616,6 +616,8 @@
+ 
+         } // segment loop
+       } // cell loop
++
++      return false; // caller will update current_position
+     }
+ 
+   #endif // UBL_SEGMENTED
+-- 
+2.30.1.windows.1
+
